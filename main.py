@@ -139,6 +139,25 @@ def generate_and_check_proxies():
                 break
     print(Fore.CYAN + f"Generation and checking complete: {ok} valid, {bad} invalid proxies.")
 
+def generate_proxies():
+    clear()
+    print(Fore.MAGENTA + HEADER)
+    print(Fore.CYAN + "[1] Check Proxy By File")
+    print(Fore.CYAN + "[2] Check From URL (GitHub, PasteBin, etc.)")
+    print(Fore.CYAN + "[3] Generate and Check Proxy")
+    print(Fore.CYAN + "[0] Back to Menu\n")
+    choice = input(Fore.YELLOW + "Choose an option: ")
+    if choice == '1':
+        check_proxy_by_file()
+    elif choice == '2':
+        check_proxy_from_url()
+    elif choice == '3':
+        generate_and_check_proxies()
+    elif choice == '0':
+        return
+    else:
+        print(Fore.RED + "Invalid option. Try again.")
+
 def proxy_options():
     clear()
     print(Fore.MAGENTA + HEADER)
