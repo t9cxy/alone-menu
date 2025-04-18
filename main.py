@@ -68,109 +68,95 @@ def get_random_useragent():
         "Mozilla/5.0 (Linux; Android 10)..."
     ])
 
-def generate_proxies():
+def check_proxy_by_file():
     clear()
     print(Fore.MAGENTA + HEADER)
-    amt = int(input(Fore.YELLOW + "How many valid proxies? > "))
-    ok = bad = 0
-    with open('proxy.txt', 'w') as f:
-        f.write(HEADER + '\n')
+    file_path = input(Fore.YELLOW + "Enter file path containing proxies: ")
+    try:
+        with open(file_path, 'r') as f:
+            proxies = f.readlines()
+        valid_proxies = []
+        for proxy in proxies:
+            proxy = proxy.strip()
+            try:
+                r = requests.get('https://httpbin.org/ip', proxies={'http': f'http://{proxy}', 'https': f'http://{proxy}'}, timeout=5)
+                if r.status_code == 200:
+                    valid_proxies.append(proxy)
+                    print(Fore.GREEN + f"Valid Proxy: {proxy}")
+                else:
+                    print(Fore.RED + f"Invalid Proxy: {proxy}")
+            except:
+                print(Fore.RED + f"Invalid Proxy: {proxy}")
+        print(Fore.CYAN + f"Valid proxies found: {len(valid_proxies)}")
+    except FileNotFoundError:
+        print(Fore.RED + "File not found.")
+
+def check_proxy_from_url():
+    clear()
+    print(Fore.MAGENTA + HEADER)
+    url = input(Fore.YELLOW + "Enter URL containing proxies (GitHub, PasteBin, etc.): ")
+    try:
+        r = requests.get(url, timeout=5)
+        if r.status_code == 200:
+            proxies = r.text.splitlines()
+            valid_proxies = []
+            for proxy in proxies:
+                try:
+                    r = requests.get('https://httpbin.org/ip', proxies={'http': f'http://{proxy}', 'https': f'http://{proxy}'}, timeout=5)
+                    if r.status_code == 200:
+                        valid_proxies.append(proxy)
+                        print(Fore.GREEN + f"Valid Proxy: {proxy}")
+                    else:
+                        print(Fore.RED + f"Invalid Proxy: {proxy}")
+                except:
+                    print(Fore.RED + f"Invalid Proxy: {proxy}")
+            print(Fore.CYAN + f"Valid proxies found: {len(valid_proxies)}")
+        else:
+            print(Fore.RED + "Failed to fetch proxies from URL.")
+    except:
+        print(Fore.RED + "Failed to fetch data from URL.")
+
+def generate_and_check_proxies():
+    clear()
+    print(Fore.MAGENTA + HEADER)
+    amt = int(input(Fore.YELLOW + "How many proxies do you want to generate and check? > "))
+    ok = 0
+    bad = 0
     while ok < amt:
         for px in get_random_proxy():
             try:
                 r = requests.get('https://httpbin.org/ip', proxies={'http': f'http://{px}', 'https': f'http://{px}'}, timeout=5)
                 if r.status_code == 200:
                     ok += 1
-                    with open('proxy.txt', 'a') as f:
-                        f.write(px + '\n')
-                    status = Fore.GREEN + 'OK'
+                    print(Fore.GREEN + f"Valid Proxy: {px}")
                 else:
                     bad += 1
-                    status = Fore.RED + f'BAD({r.status_code})'
+                    print(Fore.RED + f"Invalid Proxy: {px}")
             except:
                 bad += 1
-                status = Fore.RED + 'BAD(ERR)'
-            clear()
-            print(Fore.MAGENTA + HEADER)
-            print(Fore.CYAN + f"Proxy: {px}")
-            print(Fore.GREEN + f"[ {ok}/{amt} ] OKS    " + Fore.RED + f"[ {bad} ] BAD")
-            print(Fore.YELLOW + f"Latest status: {status}\n")
+                print(Fore.RED + f"Invalid Proxy: {px}")
             if ok >= amt:
                 break
-    print(Fore.GREEN + f"Generation complete: {ok} OK, {bad} BAD proxies.\n")
+    print(Fore.CYAN + f"Generation and checking complete: {ok} valid, {bad} invalid proxies.")
 
-def generate_useragents():
+def proxy_options():
     clear()
     print(Fore.MAGENTA + HEADER)
-    amt = int(input(Fore.YELLOW + "How many user-agents? > "))
-    ok = 0
-    with open('ug.txt', 'w') as f:
-        f.write(HEADER + '\n')
-    while ok < amt:
-        ua = get_random_useragent()
-        ok += 1
-        with open('ug.txt', 'a') as f:
-            f.write(ua + '\n')
-        clear()
-        print(Fore.MAGENTA + HEADER)
-        print(Fore.GREEN + f"[ {ok}/{amt} ] Added UA: " + Fore.CYAN + ua + "\n")
-
-def send_requests():
-    clear()
-    print(Fore.MAGENTA + HEADER)
-    url = input(Fore.YELLOW + "Enter target URL: ")
-    use_p = input(Fore.CYAN + "Use proxy? [Y/n] > ").lower() == 'y'
-    use_ua = input(Fore.CYAN + "Use UA?    [Y/n] > ").lower() == 'y'
-    cnt = int(input(Fore.YELLOW + "Requests count: "))
-    pxs = open('proxy.txt').read().splitlines() if use_p else []
-    uas = open('ug.txt').read().splitlines() if use_ua else []
-    ok = 0
-    for i in range(cnt):
-        clear(); print(Fore.MAGENTA + HEADER)
-        hdr = {'User-Agent': random.choice(uas)} if use_ua else {}
-        prx = {'http':f'http://{random.choice(pxs)}','https':f'http://{random.choice(pxs)}'} if use_p else {}
-        try:
-            r = requests.get(url, headers=hdr, proxies=prx, timeout=5)
-            if r.status_code == 200:
-                ok += 1
-                print(Fore.GREEN + f"[{i+1}] OK")
-            else:
-                print(Fore.RED + f"[{i+1}] ERROR({r.status_code})")
-        except Exception as e:
-            print(Fore.RED + f"[{i+1}] ERROR({e})")
-        print(Fore.CYAN + f"Success: {ok}/{i+1}")
-        send_log(f"Req {i+1}→{url} OK:{ok}")
-
-def look_ip_info():
-    clear()
-    print(Fore.MAGENTA + HEADER)
-    ip = input(Fore.YELLOW + "Enter target IP: ")
-    try:
-        info = requests.get(f'https://ipinfo.io/{ip}/json').json()
-        print(Fore.YELLOW + f"IP      : {info.get('ip')}")
-        print(Fore.YELLOW + f"City    : {info.get('city')}")
-        print(Fore.YELLOW + f"Region  : {info.get('region')}")
-        print(Fore.YELLOW + f"Country : {info.get('country')}")
-        print(Fore.YELLOW + f"Org     : {info.get('org')}")
-        print(Fore.YELLOW + f"Loc     : {info.get('loc')}")
-        print(Fore.YELLOW + f"Timezone: {info.get('timezone')}\n")
-    except:
-        print(Fore.RED + "Failed to retrieve IP info.\n")
-
-def send_feedback():
-    clear()
-    print(Fore.MAGENTA + HEADER)
-    fb = input(Fore.YELLOW + "Your feedback: ")
-    ip = requests.get('https://api.ipify.org').text
-    ua = requests.get('https://httpbin.org/user-agent').json().get('user-agent')
-    log = (f"~~~ FEEDBACK ~~~\n"
-           f"[ # ] User: @{username}\n"
-           f"[ IP ] {ip}\n"
-           f"[ UA ] {ua}\n"
-           f"[ ★ ] {fb}\n"
-           f"[ ⏰ ] {datetime.now():%Y-%m-%d %I:%M:%S %p}")
-    send_log(log)
-    print(Fore.GREEN + "Thanks for your feedback!\n")
+    print(Fore.CYAN + "[1] Check Proxy By File")
+    print(Fore.CYAN + "[2] Check From URL (GitHub, PasteBin, etc.)")
+    print(Fore.CYAN + "[3] Generate and Check Proxy")
+    print(Fore.CYAN + "[0] Back to Menu\n")
+    choice = input(Fore.YELLOW + "Choose an option: ")
+    if choice == '1':
+        check_proxy_by_file()
+    elif choice == '2':
+        check_proxy_from_url()
+    elif choice == '3':
+        generate_and_check_proxies()
+    elif choice == '0':
+        return
+    else:
+        print(Fore.RED + "Invalid option. Try again.")
 
 def main():
     clear(); print(Fore.MAGENTA + HEADER)
@@ -195,6 +181,7 @@ def main():
         print(Fore.MAGENTA + "[3]" + Fore.CYAN + " Generate UAs")
         print(Fore.MAGENTA + "[4]" + Fore.CYAN + " Look IP Info")
         print(Fore.MAGENTA + "[5]" + Fore.CYAN + " Send Feedback")
+        print(Fore.MAGENTA + "[6]" + Fore.CYAN + " Proxy Options")
         print(Fore.MAGENTA + "[0]" + Fore.CYAN + " Exit\n")
         ch = input(Fore.YELLOW + "Choose: ")
         if ch == '1': send_requests()
@@ -202,6 +189,7 @@ def main():
         elif ch == '3': generate_useragents()
         elif ch == '4': look_ip_info()
         elif ch == '5': send_feedback()
+        elif ch == '6': proxy_options()
         elif ch == '0': break
         else: print(Fore.RED + "Invalid, try again.")
 
