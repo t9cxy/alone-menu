@@ -13,13 +13,14 @@ BOT_TOKEN = '6770850573:AAFUCCzKlKrekJU5GtNFqdnqwMSAsnTBIc0'
 CHAT_ID   = '1241769879'
 
 HEADER = f"""
-  █████╗ ██╗      ██████╗ ███╗   ██╗███████╗
+ █████╗ ██╗      ██████╗ ███╗   ██╗███████╗
 ██╔══██╗██║     ██╔═══██╗████╗  ██║██╔════╝
 ███████║██║     ██║   ██║██╔██╗ ██║█████╗  
 ██╔══██║██║     ██║   ██║██║╚██╗██║██╔══╝  
 ██║  ██║███████╗╚██████╔╝██║ ╚████║███████╗
 ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
                                            
+
 [ • ] Telegram: @i4mAlone
 [ • ] Date: {datetime.now().strftime('%Y-%m-%d %I:%M:%S %p')}
 """
@@ -68,76 +69,36 @@ def get_random_useragent():
         "Mozilla/5.0 (Linux; Android 10)..."
     ])
 
-def check_proxy_by_file():
-    clear()
-    print(Fore.MAGENTA + HEADER)
-    file_path = input(Fore.YELLOW + "Enter file path containing proxies: ")
-    try:
-        with open(file_path, 'r') as f:
-            proxies = f.readlines()
-        valid_proxies = []
+def check_proxy_live(proxies, amt):
+    valid = 0
+    invalid = 0
+    while valid < amt:
         for proxy in proxies:
-            proxy = proxy.strip()
+            clear()
+            print(Fore.MAGENTA + HEADER)
+            print(Fore.YELLOW + f"Checking proxies... GOOD: {valid}/{amt} | BAD: {invalid}")
             try:
                 r = requests.get('https://httpbin.org/ip', proxies={'http': f'http://{proxy}', 'https': f'http://{proxy}'}, timeout=5)
                 if r.status_code == 200:
-                    valid_proxies.append(proxy)
-                    print(Fore.GREEN + f"Valid Proxy: {proxy}")
+                    valid += 1
+                    print(Fore.GREEN + f"GOOD: {proxy}")
                 else:
-                    print(Fore.RED + f"Invalid Proxy: {proxy}")
+                    invalid += 1
+                    print(Fore.RED + f"BAD: {proxy}")
             except:
-                print(Fore.RED + f"Invalid Proxy: {proxy}")
-        print(Fore.CYAN + f"Valid proxies found: {len(valid_proxies)}")
-    except FileNotFoundError:
-        print(Fore.RED + "File not found.")
-
-def check_proxy_from_url():
-    clear()
-    print(Fore.MAGENTA + HEADER)
-    url = input(Fore.YELLOW + "Enter URL containing proxies (GitHub, PasteBin, etc.): ")
-    try:
-        r = requests.get(url, timeout=5)
-        if r.status_code == 200:
-            proxies = r.text.splitlines()
-            valid_proxies = []
-            for proxy in proxies:
-                try:
-                    r = requests.get('https://httpbin.org/ip', proxies={'http': f'http://{proxy}', 'https': f'http://{proxy}'}, timeout=5)
-                    if r.status_code == 200:
-                        valid_proxies.append(proxy)
-                        print(Fore.GREEN + f"Valid Proxy: {proxy}")
-                    else:
-                        print(Fore.RED + f"Invalid Proxy: {proxy}")
-                except:
-                    print(Fore.RED + f"Invalid Proxy: {proxy}")
-            print(Fore.CYAN + f"Valid proxies found: {len(valid_proxies)}")
-        else:
-            print(Fore.RED + "Failed to fetch proxies from URL.")
-    except:
-        print(Fore.RED + "Failed to fetch data from URL.")
+                invalid += 1
+                print(Fore.RED + f"BAD: {proxy}")
+            if valid >= amt:
+                break
+        if valid >= amt:
+            break
 
 def generate_and_check_proxies():
     clear()
     print(Fore.MAGENTA + HEADER)
     amt = int(input(Fore.YELLOW + "How many proxies do you want to generate and check? > "))
-    ok = 0
-    bad = 0
-    while ok < amt:
-        for px in get_random_proxy():
-            try:
-                r = requests.get('https://httpbin.org/ip', proxies={'http': f'http://{px}', 'https': f'http://{px}'}, timeout=5)
-                if r.status_code == 200:
-                    ok += 1
-                    print(Fore.GREEN + f"Valid Proxy: {px}")
-                else:
-                    bad += 1
-                    print(Fore.RED + f"Invalid Proxy: {px}")
-            except:
-                bad += 1
-                print(Fore.RED + f"Invalid Proxy: {px}")
-            if ok >= amt:
-                break
-    print(Fore.CYAN + f"Generation and checking complete: {ok} valid, {bad} invalid proxies.")
+    proxies = get_random_proxy()
+    check_proxy_live(proxies, amt)
 
 def generate_proxies():
     clear()
