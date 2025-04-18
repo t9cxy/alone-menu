@@ -7,27 +7,23 @@ from datetime import datetime
 from colorama import Fore, Style, init
 from urllib.parse import urlparse
 
-# Initialize colorama
 init(autoreset=True)
 
-# Configuration
 BOT_TOKEN = '6770850573:AAFUCCzKlKrekJU5GtNFqdnqwMSAsnTBIc0'
 CHAT_ID   = '1241769879'
 
-# Header ASCII art
 HEADER = f"""
-█████╗ ██╗      ██████╗  ██████╗ ███╗   ██╗███████╗
+ █████╗ ██╗      ██████╗  ██████╗ ███╗   ██╗███████╗
 ██╔══██╗██║     ██╔═══██╗██╔═══██╗████╗  ██║██╔════╝
-███████║███████╗╚██████╔╝╚██████╔╝██║╚████║███████╗
-██╔══██║╚════██║ ╚════██║ ╚════██║██║ ╚███║╚════██║
-██║  ██║███████║███████║███████║██║  ╚══╝███████║
-╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝      ╚══════╝
+███████║██║     ██║   ██║██║   ██║██╔██╗ ██║███████╗
+██╔══██║██║     ██║   ██║██║   ██║██║╚██╗██║╚════██║
+██║  ██║███████╗╚██████╔╝╚██████╔╝██║ ╚████║███████║
+╚═╝  ╚═╝╚══════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚══════╝
 
 [ • ] Telegram: @i4mAlone
 [ • ] Date: {datetime.now().strftime('%Y-%m-%d %I:%M:%S %p')}
 """
 
-# Utility functions
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -72,7 +68,6 @@ def get_random_useragent():
         "Mozilla/5.0 (Linux; Android 10)..."
     ])
 
-# Feature: Generate and check proxies
 def generate_proxies():
     clear()
     print(Fore.MAGENTA + HEADER)
@@ -104,7 +99,6 @@ def generate_proxies():
                 break
     print(Fore.GREEN + f"Generation complete: {ok} OK, {bad} BAD proxies.\n")
 
-# Feature: Generate user-agents
 def generate_useragents():
     clear()
     print(Fore.MAGENTA + HEADER)
@@ -121,7 +115,6 @@ def generate_useragents():
         print(Fore.MAGENTA + HEADER)
         print(Fore.GREEN + f"[ {ok}/{amt} ] Added UA: " + Fore.CYAN + ua + "\n")
 
-# Feature: Send requests to URL
 def send_requests():
     clear()
     print(Fore.MAGENTA + HEADER)
@@ -148,12 +141,12 @@ def send_requests():
         print(Fore.CYAN + f"Success: {ok}/{i+1}")
         send_log(f"Req {i+1}→{url} OK:{ok}")
 
-# Feature: Look IP Info
 def look_ip_info():
     clear()
     print(Fore.MAGENTA + HEADER)
+    ip = input(Fore.YELLOW + "Enter target IP: ")
     try:
-        info = requests.get('https://ipinfo.io/json').json()
+        info = requests.get(f'https://ipinfo.io/{ip}/json').json()
         print(Fore.YELLOW + f"IP      : {info.get('ip')}")
         print(Fore.YELLOW + f"City    : {info.get('city')}")
         print(Fore.YELLOW + f"Region  : {info.get('region')}")
@@ -164,7 +157,6 @@ def look_ip_info():
     except:
         print(Fore.RED + "Failed to retrieve IP info.\n")
 
-# Feature: Send feedback
 def send_feedback():
     clear()
     print(Fore.MAGENTA + HEADER)
@@ -180,7 +172,6 @@ def send_feedback():
     send_log(log)
     print(Fore.GREEN + "Thanks for your feedback!\n")
 
-# Main menu
 def main():
     clear(); print(Fore.MAGENTA + HEADER)
     global username
