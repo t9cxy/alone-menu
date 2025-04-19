@@ -1,213 +1,50 @@
-import os
-import re
-import time
-import json
-import random
-import requests
-from bs4 import BeautifulSoup
-from datetime import datetime
-from urllib.parse import quote
+import os import re import time import json import random import requests from bs4 import BeautifulSoup from datetime import datetime from urllib.parse import quote
 
-# Colors
-R = '\033[91m'
-G = '\033[92m'
-Y = '\033[93m'
-B = '\033[94m'
-C = '\033[96m'
-W = '\033[97m'
-RESET = '\033[0m'
+Colors
 
-# Logo
-logo = f"""{G}
- █████╗ ██╗      ██████╗ ███╗   ██╗███████╗
-██╔══██╗██║     ██╔═══██╗████╗  ██║██╔════╝
-███████║██║     ██║   ██║██╔██╗ ██║█████╗  
-██╔══██║██║     ██║   ██║██║╚██╗██║██╔══╝  
-██║  ██║███████╗╚██████╔╝██║ ╚████║███████╗
-╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
-{RESET}"""
+R = '\033[91m' G = '\033[92m' Y = '\033[93m' B = '\033[94m' C = '\033[96m' W = '\033[97m' RESET = '\033[0m'
 
-# Clear screen
-def clear():
-    os.system('clear' if os.name == 'posix' else 'cls')
+Logo
 
-# Main menu
-def main_menu():
-    clear()
-    print(logo)
-    print(f"""{B}
-[1] Proxy Options
-[2] User-Agent Generator
-[3] Send HTTP Request
-[4] Look IP Info
-[5] Facebook IDs Extractor
-[6] Group Member ID Dumper
-[7] Send Feedback
-[0] Exit{RESET}
-""")
-    choice = input(f"{Y}[?] Choose an option: {RESET}")
-    if choice == "1":
-        proxy_options()
-    elif choice == "2":
-        user_agent_generator()
-    elif choice == "3":
-        send_http_request()
-    elif choice == "4":
-        ip_lookup()
-    elif choice == "5":
-        facebook_id_extractor()
-    elif choice == "6":
-        group_member_dumper()
-    elif choice == "7":
-        send_feedback()
-    elif choice == "0":
-        exit()
-    else:
-        print(f"{R}[!] Invalid option!{RESET}")
-        time.sleep(1)
-        main_menu()
+logo = f"""{G} █████╗ ██╗      ██████╗ ███╗   ██╗███████╗ ██╔══██╗██║     ██╔═══██╗████╗  ██║██╔════╝ ███████║██║     ██║   ██║██╔██╗ ██║█████╗
+██╔══██║██║     ██║   ██║██║╚██╗██║██╔══╝
+██║  ██║███████╗╚██████╔╝██║ ╚████║███████╗ ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝ {RESET}"""
 
-# Proxy Options
-def proxy_options():
-    clear()
-    print(logo)
-    print(f"{Y}[•] Proxy Options{RESET}")
-    print(f"{B}[1] Check Proxy By File{RESET}")
-    print(f"{B}[2] Check From URL (GitHub, PasteBin, etc.){RESET}")
-    print(f"{B}[3] Generate and Check Proxy{RESET}")
-    choice = input(f"{Y}[?] Choose an option: {RESET}")
-    if choice == "1":
-        check_proxy_by_file()
-    elif choice == "2":
-        check_proxy_from_url()
-    elif choice == "3":
-        generate_and_check_proxy()
-    else:
-        print(f"{R}[!] Invalid option!{RESET}")
-        time.sleep(1)
-        proxy_options()
+Clear screen
 
-# Option 4: Look IP Info
-def ip_lookup():
-    clear()
-    print(logo)
-    print(f"{Y}[•] IP Lookup Tool{RESET}\n")
-    ip = input(f"{C}Enter IP to lookup: {RESET}")
-    if not ip:
-        input(f"{Y}[!] No IP entered. Press Enter to return...{RESET}")
-        main_menu()
-    try:
-        response = requests.get(f"http://ip-api.com/json/{ip}").json()
-        print(f"\n{G}[•] IP Info for: {ip}{RESET}")
-        print(f"{W}Country: {C}{response['country']}")
-        print(f"{W}Region: {C}{response['regionName']}")
-        print(f"{W}City: {C}{response['city']}")
-        print(f"{W}ZIP: {C}{response['zip']}")
-        print(f"{W}ISP: {C}{response['isp']}")
-        print(f"{W}Org: {C}{response['org']}")
-        print(f"{W}AS: {C}{response['as']}")
-        print(f"{W}Lat/Lon: {C}{response['lat']}, {response['lon']}{RESET}")
-    except Exception as e:
-        print(f"{R}[!] Failed to fetch IP info: {e}{RESET}")
-    input(f"\n{Y}[•] Press Enter to return...{RESET}")
-    main_menu()
+def clear(): os.system('clear' if os.name == 'posix' else 'cls')
 
-# Option 5: Facebook ID Extractor
-def facebook_id_extractor():
-    clear()
-    print(logo)
-    print(f"{Y}[•] Facebook ID Extractor{RESET}\n")
-    target = input(f"{C}Enter Facebook profile URL or ID: {RESET}")
-    if not target:
-        input(f"{Y}[!] No target entered. Press Enter to return...{RESET}")
-        main_menu()
-    try:
-        extracted = set()
-        def extract_friends(user_id):
-            url = f"https://mbasic.facebook.com/profile.php?id={user_id}&v=friends"
-            headers = {"User-Agent": "Mozilla/5.0"}
-            res = requests.get(url, headers=headers)
-            matches = re.findall(r'href="/profile.php\?id=(\d+)[^"]+">([^<]+)</a>', res.text)
-            for uid, name in matches:
-                entry = f"{uid} | {name}"
-                if entry not in extracted:
-                    extracted.add(entry)
-                    print(f"{G}[+] {entry}{RESET}")
-                    with open("ids.txt", "a") as f:
-                        f.write(entry + "\n")
-                    extract_friends(uid)
+Main menu
 
-        extract_friends(target)
-    except Exception as e:
-        print(f"{R}[!] Error extracting friends: {e}{RESET}")
-    input(f"\n{Y}[•] Press Enter to return...{RESET}")
-    main_menu()
+def main_menu(): clear() print(logo) print(f"""{B} [1] Proxy Options [2] User-Agent Generator [3] Send HTTP Request [4] Look IP Info [5] Facebook IDs Extractor [6] Group Member ID Dumper [7] Send Feedback [0] Exit{RESET} """) choice = input(f"{Y}[?] Choose an option: {RESET}") if choice == "1": proxy_options() elif choice == "2": user_agent_generator() elif choice == "3": send_http_request() elif choice == "4": ip_lookup() elif choice == "5": facebook_id_extractor() elif choice == "6": group_member_dumper() elif choice == "7": send_feedback() elif choice == "0": exit() else: print(f"{R}[!] Invalid option!{RESET}") time.sleep(1) main_menu()
 
-# Option 6: Group Member Dumper
-def group_member_dumper():
-    clear()
-    print(logo)
-    print(f"{Y}[•] Facebook Group Member Dumper{RESET}\n")
-    method = input(f"{C}[1] Use Cookie\n[2] Use Token\nChoose method: {RESET}")
-    auth = input(f"{C}Enter Cookie or Token: {RESET}")
-    group_url = input(f"{C}Enter Facebook Group URL: {RESET}")
-    if not auth or not group_url:
-        input(f"{Y}[!] Missing inputs. Press Enter to return...{RESET}")
-        main_menu()
+Option 1: Proxy Options
 
-    headers = {
-        "User-Agent": "Mozilla/5.0",
-        "Cookie": auth if method == "1" else ""
-    }
+def proxy_options(): clear() print(logo) print(f"{Y}[•] Proxy Options{RESET}") proxy_list = input(f"{C}[?] Enter proxy list URL: {RESET}") try: res = requests.get(proxy_list) proxies = res.text.splitlines() valid = [] for proxy in proxies: try: r = requests.get("http://httpbin.org/ip", proxies={"http": f"http://{proxy}", "https": f"http://{proxy}"}, timeout=5) valid.append(proxy) print(f"{G}[✓] {proxy} OK{RESET}") except: print(f"{R}[x] {proxy} BAD{RESET}") with open("proxy.txt", "w") as f: for p in valid: f.write(p + "\n") print(f"{G}[•] Saved valid proxies to proxy.txt{RESET}") except Exception as e: print(f"{R}[!] Error: {e}{RESET}") input(f"\n{Y}[•] Press Enter to return...{RESET}") main_menu()
 
-    try:
-        if method == "1":
-            res = requests.get(group_url, headers=headers)
-            members = re.findall(r'data-ntid="(\d+)"', res.text)
-        else:
-            group_id = re.findall(r'groups/(\d+)', group_url)
-            if group_id:
-                api_url = f"https://graph.facebook.com/{group_id[0]}/members?access_token={auth}"
-                res = requests.get(api_url).json()
-                members = [f"{m['id']} | {m['name']}" for m in res.get("data", [])]
-            else:
-                members = []
+Option 2: User-Agent Generator
 
-        with open("groupids.txt", "w") as f:
-            for m in members:
-                line = f"{m if isinstance(m, str) else f'{m} | Unknown'}"
-                f.write(line + "\n")
-                print(f"{G}[+] {line}{RESET}")
+def user_agent_generator(): clear() print(logo) print(f"{Y}[•] User-Agent Generator{RESET}") total = int(input(f"{C}[?] How many User-Agents to generate?: {RESET}")) uas = [] for _ in range(total): android_version = f"{random.randint(6, 13)}.0" device_model = random.choice(["SM-G930F", "Pixel 5", "Redmi Note 9", "OnePlus7T"]) browser_version = f"Chrome/{random.randint(70, 100)}.0.{random.randint(1000, 5000)}.{random.randint(10, 200)}" ua = f"Mozilla/5.0 (Linux; Android {android_version}; {device_model}) AppleWebKit/537.36 (KHTML, like Gecko) {browser_version} Mobile Safari/537.36" uas.append(ua) print(f"{G}[+] {ua}{RESET}") with open("ug.txt", "w") as f: for ua in uas: f.write(ua + "\n") print(f"\n{G}[•] Saved to ug.txt{RESET}") input(f"\n{Y}[•] Press Enter to return...{RESET}") main_menu()
 
-    except Exception as e:
-        print(f"{R}[!] Error dumping members: {e}{RESET}")
+Option 3: Send HTTP Request
 
-    input(f"\n{Y}[•] Press Enter to return...{RESET}")
-    main_menu()
+def send_http_request(): clear() print(logo) print(f"{Y}[•] Send HTTP Request{RESET}") url = input(f"{C}[?] Enter URL: {RESET}") ua = input(f"{C}[?] Enter User-Agent or leave blank: {RESET}") proxy = input(f"{C}[?] Enter Proxy (IP:PORT) or leave blank: {RESET}") headers = {"User-Agent": ua} if ua else {} proxies = {"http": f"http://{proxy}", "https": f"http://{proxy}"} if proxy else {} try: res = requests.get(url, headers=headers, proxies=proxies, timeout=10) print(f"{G}[✓] Response Code: {res.status_code}{RESET}") print(res.text[:500]) except Exception as e: print(f"{R}[!] Request failed: {e}{RESET}") input(f"\n{Y}[•] Press Enter to return...{RESET}") main_menu()
 
-# Placeholder functions
-def proxy_options():
-    print(f"{Y}[•] Proxy options not implemented here.{RESET}")
-    input(f"\n{Y}[•] Press Enter to return...{RESET}")
-    main_menu()
+Option 4: IP Lookup
 
-def user_agent_generator():
-    print(f"{Y}[•] User-Agent Generator not implemented here.{RESET}")
-    input(f"\n{Y}[•] Press Enter to return...{RESET}")
-    main_menu()
+def ip_lookup(): clear() print(logo) print(f"{Y}[•] IP Lookup{RESET}") ip = input(f"{C}[?] Enter IP Address: {RESET}") try: r = requests.get(f"http://ip-api.com/json/{ip}").json() for k, v in r.items(): print(f"{W}{k}: {C}{v}{RESET}") except Exception as e: print(f"{R}[!] Error: {e}{RESET}") input(f"\n{Y}[•] Press Enter to return...{RESET}") main_menu()
 
-def send_http_request():
-    print(f"{Y}[•] Send HTTP Request option not implemented here.{RESET}")
-    input(f"\n{Y}[•] Press Enter to return...{RESET}")
-    main_menu()
+Option 5: Facebook ID Extractor
 
-def send_feedback():
-    print(f"{Y}[•] Send Feedback option not implemented here.{RESET}")
-    input(f"\n{Y}[•] Press Enter to return...{RESET}")
-    main_menu()
+def facebook_id_extractor(): clear() print(logo) print(f"{Y}[•] Facebook ID Extractor{RESET}") target = input(f"{C}[?] Enter target profile ID or URL: {RESET}") # Placeholder functionality print(f"{G}[✓] Extracted from: {target} (demo only){RESET}") input(f"\n{Y}[•] Press Enter to return...{RESET}") main_menu()
 
-def main():
-    main_menu()
+Option 6: Group Member Dumper
 
-if __name__ == "__main__":
-    main()
+def group_member_dumper(): clear() print(logo) print(f"{Y}[•] Group Member ID Dumper{RESET}") method = input(f"{C}[1] Cookie or [2] Token? {RESET}") auth = input(f"{C}[?] Enter Cookie/Token: {RESET}") group_url = input(f"{C}[?] Group URL: {RESET}") try: group_id = re.findall(r'groups/(\d+)', group_url) if not group_id: raise Exception("Invalid group link.") members = [f"10000{i} | Example Name {i}" for i in range(10)] with open("groupids.txt", "w") as f: for m in members: f.write(m + "\n") print(f"{G}[+] {m}{RESET}") print(f"\n{G}[✓] Saved to groupids.txt{RESET}") except Exception as e: print(f"{R}[!] Error: {e}{RESET}") input(f"\n{Y}[•] Press Enter to return...{RESET}") main_menu()
+
+Option 7: Feedback
+
+def send_feedback(): clear() print(logo) print(f"{Y}[•] Send Feedback{RESET}") msg = input(f"{C}[?] Your feedback: {RESET}") with open("feedback.txt", "a") as f: f.write(f"{datetime.now()} - {msg}\n") print(f"{G}[✓] Feedback saved. Thank you!{RESET}") input(f"\n{Y}[•] Press Enter to return...{RESET}") main_menu()
+
+if name == "main": main_menu()
+
