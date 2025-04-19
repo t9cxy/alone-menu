@@ -3,11 +3,8 @@ import sys
 import time
 import requests
 import json
-import random
 from datetime import datetime
-from bs4 import BeautifulSoup
 
-# Colors for terminal output
 class Colors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -76,26 +73,31 @@ def encrypt_code():
     print_colored("[•] Welcome to the Code Encryptor!", Colors.OKCYAN)
     file_name = input("[•] File Name: ").strip()
 
-    # Check both absolute and relative path
-    if not os.path.isfile(file_name):
-        file_path = os.path.join(os.getcwd(), file_name)
-    else:
-        file_path = file_name
+    # Check for exact match or relative path
+    current_dir = os.getcwd()
+    file_path = os.path.join(current_dir, file_name)
 
-    if os.path.isfile(file_path):
+    if os.path.isfile(file_name):  # if exact filename matches
+        file_path = file_name
+    elif not os.path.isfile(file_path):
+        print_colored(f"[•] File '{file_name}' does not exist!", Colors.FAIL)
+        input("[•] Press Enter to return to the main menu...")
+        return
+
+    try:
         with open(file_path, 'r', encoding='utf-8') as f:
             code = f.read()
 
         encrypted_code = "# Encrypted file\n" + "".join(reversed(code))
-        encrypted_name = f"encrypted_{os.path.basename(file_name)}"
+        encrypted_name = f"encrypted_{os.path.basename(file_path)}"
 
         with open(encrypted_name, "w", encoding='utf-8') as f:
             f.write(encrypted_code)
 
         log_and_notify(f"Encrypted: {file_name} -> {encrypted_name}")
         print_colored(f"[•] Encrypted successfully as '{encrypted_name}'", Colors.OKGREEN)
-    else:
-        print_colored(f"[•] File '{file_name}' not found!", Colors.FAIL)
+    except Exception as e:
+        print_colored(f"[•] Error: {e}", Colors.FAIL)
 
     input("[•] Press Enter to return to the main menu...")
 
@@ -135,8 +137,7 @@ def main_menu():
             print_colored("[•] Invalid option. Try again.", Colors.FAIL)
             time.sleep(1)
 
-        # After each menu task, check GitHub for updates
-        os.system("python github.py")
+        os.system("python github.py")  # check for update every cycle
 
 if __name__ == "__main__":
     main_menu()
