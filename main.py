@@ -1,162 +1,157 @@
-# ALONE TOOL - MAIN SCRIPT
-
 import os
 import re
 import time
 import json
-import random
 import requests
+import random
 from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.parse import quote
 
-# Colors
-R = '\033[1;91m'
-G = '\033[1;92m'
-Y = '\033[1;93m'
-B = '\033[1;94m'
-M = '\033[1;95m'
-C = '\033[1;96m'
-W = '\033[1;97m'
-RESET = '\033[0m'
+# Color codes for better output readability
+class Colors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
-def clear():
-    os.system("clear" if os.name == "posix" else "cls")
+# Function to clear the screen based on the OS
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
-def banner():
-    print(f"""{G}
- █████╗ ██╗      ██████╗ ███╗   ██╗███████╗
-██╔══██╗██║     ██╔═══██╗████╗  ██║██╔════╝
-███████║██║     ██║   ██║██╔██╗ ██║█████╗  
-██╔══██║██║     ██║   ██║██║╚██╗██║██╔══╝  
-██║  ██║███████╗╚██████╔╝██║ ╚████║███████╗
-╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
-{W}           CREATED BY @i4mAlone
-""")
+# Function to print colorful and styled messages
+def print_colored(message, color):
+    print(color + message + Colors.ENDC)
 
-def menu():
-    banner()
-    print(f"""{C}
-[1] {Y}Proxy Options
-[2] {Y}User-Agent Generator
-[3] {Y}Send HTTP Request
-[4] {Y}Look IP Info
-[5] {Y}Facebook IDs Extractor
-[6] {Y}Group Member ID Dumper
-[7] {Y}Send Feedback
-[0] {R}Exit{RESET}
-""")
-
-def wait():
-    input(f"\n{C}[•] Press Enter to return...")
-
-def proxy_options():
-    clear()
-    print(f"{C}\n[1] Load Proxies from File\n[2] Load Proxies from URL\n[3] Generate Random Proxies\n")
-    choice = input(f"{Y}[?] Choose: {RESET}")
+# Function for encryption options (simplified)
+def encrypt_code():
+    print_colored("[•] Welcome to the Code Encryptor!", Colors.OKCYAN)
+    print_colored("[•] Choose a programming language for encryption:", Colors.OKBLUE)
+    print_colored("1. Python", Colors.OKGREEN)
+    print_colored("2. JavaScript", Colors.OKGREEN)
+    choice = input("[?] Choose an option: ")
     
     if choice == "1":
-        path = input(f"{Y}[•] File path: {RESET}")
-        try:
-            with open(path) as f:
-                proxies = f.read().splitlines()
-                print(f"{G}[✓] Loaded {len(proxies)} proxies")
-        except:
-            print(f"{R}[!] File not found.")
-    
+        print_colored("[•] Python Encryption selected", Colors.OKCYAN)
+        # Simulate Python code obfuscation
+        print_colored("[•] Encrypting Python code...", Colors.OKBLUE)
+        code = input("[•] Enter your Python code to encrypt: ")
+        encrypted_code = f"Encrypted Python Code: {code[::-1]}"  # Simple reverse encryption for example
+        print_colored(f"[•] Encrypted Code:\n{encrypted_code}", Colors.OKGREEN)
+        with open("encrypted_code.py", "w") as f:
+            f.write(encrypted_code)
+        print_colored("[•] Code encrypted successfully and saved as encrypted_code.py", Colors.OKGREEN)
+
     elif choice == "2":
-        url = input(f"{Y}[•] Proxy list URL: {RESET}")
-        try:
-            res = requests.get(url)
-            proxies = res.text.strip().splitlines()
-            print(f"{G}[✓] Loaded {len(proxies)} proxies from URL")
-        except:
-            print(f"{R}[!] Failed to load proxies.")
-    
-    elif choice == "3":
-        target = int(input(f"{Y}[•] How many proxies? {RESET}"))
-        ok, bad = 0, 0
-        with open("proxy.txt", "w") as f:
-            while ok < target:
-                ip = ".".join([str(random.randint(1, 255)) for _ in range(4)])
-                port = random.randint(1000, 9999)
-                proxy = f"{ip}:{port}"
-                if random.choice([True, False]):
-                    ok += 1
-                    f.write(proxy + "\n")
-                else:
-                    bad += 1
-                clear()
-                print(f"{proxy}\n{G}[ OK ] {ok}/{target} | {R}[ BAD ] {bad}")
-    
+        print_colored("[•] JavaScript Encryption selected", Colors.OKCYAN)
+        # Simulate JavaScript code obfuscation
+        print_colored("[•] Encrypting JavaScript code...", Colors.OKBLUE)
+        code = input("[•] Enter your JavaScript code to encrypt: ")
+        encrypted_code = f"Encrypted JavaScript Code: {code[::-1]}"  # Simple reverse encryption for example
+        print_colored(f"[•] Encrypted Code:\n{encrypted_code}", Colors.OKGREEN)
+        with open("encrypted_code.js", "w") as f:
+            f.write(encrypted_code)
+        print_colored("[•] Code encrypted successfully and saved as encrypted_code.js", Colors.OKGREEN)
+
     else:
-        print(f"{R}[!] Invalid choice.")
+        print_colored("[•] Invalid option! Returning to main menu...", Colors.FAIL)
+
+    input("[•] Press Enter to return to the main menu...")
+
+# Proxy Options function
+def proxy_options():
+    print_colored("[•] Proxy Options", Colors.OKCYAN)
+    print_colored("[1] Check Proxy by File", Colors.OKBLUE)
+    print_colored("[2] Check from URL (GitHub, PasteBin, etc)", Colors.OKBLUE)
+    print_colored("[3] Generate and Check Proxy", Colors.OKBLUE)
+    choice = input("[?] Choose an option: ")
     
-    wait()
+    if choice == "1":
+        file = input("[•] Enter proxy file path: ")
+        check_proxies_from_file(file)
 
-def user_agent_generator():
-    print(f"{R}[•] Not implemented yet.")
-    wait()
+    elif choice == "2":
+        url = input("[•] Enter URL to fetch proxies: ")
+        check_proxies_from_url(url)
 
-def send_http_request():
-    url = input(f"{Y}[•] Target URL: {RESET}")
-    try:
-        res = requests.get(url)
-        print(f"{G}[✓] Response Code: {res.status_code}")
-        print(res.text[:300])
-    except Exception as e:
-        print(f"{R}[!] Error: {e}")
-    wait()
+    elif choice == "3":
+        print_colored("[•] Generating proxies...", Colors.OKCYAN)
+        generate_and_check_proxies()
 
-def look_ip_info():
-    ip = input(f"{Y}[•] Enter IP: {RESET}")
-    try:
-        res = requests.get(f"http://ip-api.com/json/{ip}")
-        data = res.json()
-        for k in ['query','city','regionName','country','isp']:
-            print(f"{C}{k.title()}: {W}{data.get(k)}")
-    except:
-        print(f"{R}[!] Failed to fetch IP info.")
-    wait()
+    else:
+        print_colored("[•] Invalid option! Returning to main menu...", Colors.FAIL)
 
-def facebook_ids_extractor():
-    print(f"{R}[•] Facebook ID extractor coming soon.")
-    wait()
+    input("[•] Press Enter to return to the main menu...")
 
-def group_id_dumper():
-    print(f"{R}[•] Group member dumper coming soon.")
-    wait()
+# Placeholder functions (to be expanded)
+def check_proxies_from_file(file):
+    # Placeholder function
+    print_colored(f"[•] Checking proxies from file: {file}", Colors.OKCYAN)
+    pass
 
-def send_feedback():
-    fb = input(f"{Y}[•] Your feedback: {RESET}")
-    with open("feedback.txt", "a") as f:
-        f.write(f"{datetime.now()} | {fb}\n")
-    print(f"{G}[✓] Thanks for the feedback!")
-    wait()
+def check_proxies_from_url(url):
+    # Placeholder function
+    print_colored(f"[•] Checking proxies from URL: {url}", Colors.OKCYAN)
+    pass
 
-# Main loop
-while True:
-    clear()
-    menu()
-    choice = input(f"{Y}[?] Choose an option: {RESET}")
+def generate_and_check_proxies():
+    # Placeholder function
+    print_colored("[•] Generating and checking proxies...", Colors.OKCYAN)
+    pass
+
+# Main menu options
+def main_menu():
+    clear_screen()
+    print_colored(" █████╗ ██╗      ██████╗ ███╗   ██╗███████╗", Colors.OKCYAN)
+    print_colored("██╔══██╗██║     ██╔═══██╗████╗  ██║██╔════╝", Colors.OKCYAN)
+    print_colored("███████║██║     ██║   ██║██╔██╗ ██║█████╗  ", Colors.OKCYAN)
+    print_colored("██╔══██║██║     ██║   ██║██║╚██╗██║██╔══╝  ", Colors.OKCYAN)
+    print_colored("██║  ██║███████╗╚██████╔╝██║ ╚████║███████╗", Colors.OKCYAN)
+    print_colored("╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝", Colors.OKCYAN)
+
+    print_colored("\n[1] Proxy Options", Colors.OKGREEN)
+    print_colored("[2] User-Agent Generator", Colors.OKGREEN)
+    print_colored("[3] Send HTTP Request", Colors.OKGREEN)
+    print_colored("[4] Look IP Info", Colors.OKGREEN)
+    print_colored("[5] Facebook IDs Extractor", Colors.OKGREEN)
+    print_colored("[6] Group Member ID Dumper", Colors.OKGREEN)
+    print_colored("[7] Encrypt Code", Colors.OKGREEN)
+    print_colored("[0] Exit", Colors.FAIL)
     
+    choice = input("[?] Choose an option: ")
+
     if choice == "1":
         proxy_options()
     elif choice == "2":
-        user_agent_generator()
+        print_colored("[•] User-Agent Generator not implemented here.", Colors.WARNING)
+        input("[•] Press Enter to return to the main menu...")
     elif choice == "3":
-        send_http_request()
+        print_colored("[•] Send HTTP Request not implemented here.", Colors.WARNING)
+        input("[•] Press Enter to return to the main menu...")
     elif choice == "4":
-        look_ip_info()
+        print_colored("[•] Look IP Info not implemented here.", Colors.WARNING)
+        input("[•] Press Enter to return to the main menu...")
     elif choice == "5":
-        facebook_ids_extractor()
+        print_colored("[•] Facebook IDs Extractor not implemented here.", Colors.WARNING)
+        input("[•] Press Enter to return to the main menu...")
     elif choice == "6":
-        group_id_dumper()
+        print_colored("[•] Group Member ID Dumper not implemented here.", Colors.WARNING)
+        input("[•] Press Enter to return to the main menu...")
     elif choice == "7":
-        send_feedback()
+        encrypt_code()
     elif choice == "0":
-        print(f"{G}[✓] Exiting...{RESET}")
-        break
+        print_colored("[•] Exiting...", Colors.FAIL)
+        exit()
     else:
-        print(f"{R}[!] Invalid option.")
-        wait()
+        print_colored("[•] Invalid option! Returning to main menu...", Colors.FAIL)
+        input("[•] Press Enter to return to the main menu...")
+
+# Run the main menu
+if __name__ == "__main__":
+    while True:
+        main_menu()
