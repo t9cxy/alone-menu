@@ -1,59 +1,128 @@
-import os import requests import json import re import time from bs4 import BeautifulSoup from colorama import Fore, Style, init
+import time
+import re
+import os
+import requests
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
 
-init(autoreset=True)
+# Initialize Selenium WebDriver
+driver = webdriver.Chrome()  # Ensure chromedriver is in your PATH
 
-Colors
+# -------------------------- ASCII Art --------------------------
+def print_logo():
+    print("""
+█████╗ ██╗      ██████╗ ███╗   ██╗███████╗
+██╔══██╗██║     ██╔═══██╗████╗  ██║██╔════╝
+███████║██║     ██║   ██║██╔██╗ ██║█████╗  
+██╔══██║██║     ██║   ██║██║╚██╗██║██╔══╝  
+██║  ██║███████╗╚██████╔╝██║ ╚████║███████╗
+╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
+    """)
 
-R = Fore.RED G = Fore.GREEN Y = Fore.YELLOW B = Fore.BLUE C = Fore.CYAN M = Fore.MAGENTA W = Fore.WHITE
+# -------------------------- Proxy Generator --------------------------
+def generate_proxies():
+    # Proxy generation logic (simplified here)
+    proxy_list = []
+    for _ in range(10):  # Change to your desired proxy count
+        proxy = "ip:port"
+        proxy_list.append(proxy)
+    return proxy_list
 
-ASCII Logo
+# -------------------------- Facebook ID Extractor --------------------------
+def login_facebook(email, password):
+    driver.get('https://www.facebook.com/')
+    time.sleep(2)
+    driver.find_element(By.ID, 'email').send_keys(email)
+    driver.find_element(By.ID, 'pass').send_keys(password)
+    driver.find_element(By.NAME, 'login').click()
+    time.sleep(5)  # Wait for login to complete
 
-logo = f""" {R} ██████▆ ██▄      ██████▀ ███▉   ██▄█████▃ {R}██▄▄██▄██▄     ██▄▄▄▄▀ ████▂  ██▄██▄▄▄▄▀ {R}███████▄██▄     ██▄   ██▄██▄██▂▄ ██▄████▀ {R}██▄▄██▄██▄     ██▄   ██▄██▄▀██▄██▄▄▀ {R}██▄  ██▄█████▆▃██▄████▀ ██▄ ████▄█████▃ {R}▄▀  ▄▀▄▀▀▀▀▀▀▀▀ ▄▀  ▄▀▄▀▀▀▀▀▀ """
+def get_friends(profile_url):
+    driver.get(profile_url)
+    time.sleep(5)
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    friends = []
+    for link in soup.find_all('a', href=True):
+        href = link['href']
+        name = link.get_text()
+        if '/profile.php?id=' in href:
+            uid = re.search(r'id=(\d+)', href).group(1)
+            friends.append((uid, name))
+        elif href.startswith('/'):
+            uid = href.strip('/').split('?')[0]
+            friends.append((uid, name))
+    return friends
 
-def clear(): os.system('cls' if os.name == 'nt' else 'clear')
+def extract_ids(email, password, target_profile):
+    login_facebook(email, password)
+    first_level_friends = get_friends(target_profile)
+    all_friends = set(first_level_friends)
+    for uid, _ in first_level_friends:
+        friend_profile = f'https://www.facebook.com/profile.php?id={uid}'
+        friends_of_friend = get_friends(friend_profile)
+        all_friends.update(friends_of_friend)
+    with open('ids.txt', 'w', encoding='utf-8') as f:
+        for uid, name in all_friends:
+            f.write(f'{uid} | {name}\n')
 
-def menu(): clear() print(logo) print(f"{Y}[ 1 ]{W} Proxy Tools") print(f"{Y}[ 2 ]{W} User-Agent Generator") print(f"{Y}[ 3 ]{W} Send HTTP Request") print(f"{Y}[ 4 ]{W} Look IP Info") print(f"{Y}[ 5 ]{W} Facebook IDs Extractor") print(f"{Y}[ 6 ]{W} Send Feedback") print(f"{Y}[ 0 ]{R}Exit") choice = input(f"\n{B}Choose: {W}") if choice == '4': victim_ip_info() elif choice == '5': facebook_ids_extractor() elif choice == '0': exit() else: input(f"{R}[ ! ] Not Implemented Yet. Press Enter to return.") menu()
+# -------------------------- Menu Options --------------------------
+def display_menu():
+    print_logo()
+    print("\n[1] Proxy Options")
+    print("[2] Facebook ID Extractor")
+    print("[3] Send Feedback")
+    print("[4] Exit\n")
 
-def victim_ip_info(): clear() print(logo) ip = input(f"{C}[ ? ] Enter target IP: {W}") try: res = requests.get(f"http://ip-api.com/json/{ip}") data = res.json() print(f"\n{G}IP Info:") for key, value in data.items(): print(f"{B}{key.capitalize()}:{W} {value}") except Exception as e: print(f"{R}[ ! ] Error: {e}") input(f"\n{Y}[ * ] Press Enter to return to menu...") menu()
+def proxy_menu():
+    print("\n[1] Check Proxy By File")
+    print("[2] Check From URL (GitHub, PasteBin, etc.)")
+    print("[3] Generate and Check Proxy\n")
 
-def facebook_ids_extractor(): clear() print(logo) target = input(f"{C}[ ? ] Enter target profile link or ID: {W}") visited = set() result = set()
+def facebook_ids_extractor():
+    print("[*] Enter Facebook email and password:")
+    email = input("Email: ")
+    password = input("Password: ")
+    target_profile = input("Enter Target Profile URL: ")
+    print("[*] Extracting IDs...")
 
-def extract_ids(profile):
-    if profile in visited:
-        return
-    visited.add(profile)
-    try:
-        url = f"https://mbasic.facebook.com/{profile}" if not profile.startswith('http') else profile
-        headers = {"User-Agent": "Mozilla/5.0"}
-        r = requests.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, 'html.parser')
-        links = soup.find_all('a', href=True)
-        for a in links:
-            if '/friends' in a['href']:
-                friends_url = 'https://mbasic.facebook.com' + a['href']
-                rf = requests.get(friends_url, headers=headers)
-                sf = BeautifulSoup(rf.text, 'html.parser')
-                friend_links = sf.find_all('a', href=True)
-                for link in friend_links:
-                    if 'fref' in link['href'] or '/profile.php?' in link['href']:
-                        name = link.text.strip()
-                        href = link['href']
-                        uid_match = re.search(r'id=(\d+)', href)
-                        if uid_match:
-                            uid = uid_match.group(1)
-                            result.add(f"{uid} | {name}")
-                            extract_ids(uid)
-    except Exception as e:
-        print(f"{R}[ ! ] Error while extracting: {e}")
+    extract_ids(email, password, target_profile)
+    print("[*] Extraction complete. Results saved in 'ids.txt'")
 
-extract_ids(target)
-with open("ids.txt", "w", encoding="utf-8") as f:
-    for line in result:
-        f.write(line + "\n")
+def send_feedback():
+    feedback = input("Enter your feedback: ")
+    print("[*] Sending feedback...")  # Replace with your actual feedback handling code
+    time.sleep(1)
+    print("[*] Feedback sent successfully.")
 
-print(f"\n{G}[ + ] Extraction complete. Saved to ids.txt")
-input(f"{Y}[ * ] Press Enter to return to menu...")
-menu()
+def main():
+    while True:
+        display_menu()
+        choice = input("Choose an option: ")
 
-if name == 'main': menu()
+        if choice == '1':
+            proxy_menu()
+            proxy_choice = input("Choose proxy option: ")
+            if proxy_choice == '1':
+                print("[*] Check Proxy By File (Functionality to be implemented)")
+            elif proxy_choice == '2':
+                print("[*] Check Proxy From URL (Functionality to be implemented)")
+            elif proxy_choice == '3':
+                proxies = generate_proxies()
+                print("\n[ GOOD ] Proxy Generation Results:")
+                for proxy in proxies:
+                    print(f"[ {proxy} ]")
 
+        elif choice == '2':
+            facebook_ids_extractor()
+
+        elif choice == '3':
+            send_feedback()
+
+        elif choice == '4':
+            print("[*] Exiting...")
+            driver.quit()  # Close the Selenium WebDriver
+            break
+
+if __name__ == '__main__':
+    main()
