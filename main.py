@@ -66,29 +66,6 @@ def encrypt_code():
 
     input("[•] Press Enter to return to the main menu...")
 
-# Decrypt Code Function (in owner.py)
-def decrypt_code():
-    print_colored("[•] Welcome to the Code Decryptor!", Colors.OKCYAN)
-    print_colored("[•] Please enter the file name to decrypt:", Colors.OKBLUE)
-    file_name = input("[•] File Name: ")
-
-    if os.path.exists(file_name):
-        with open(file_name, 'r') as f:
-            encrypted_code = f.read()
-        
-        decrypted_code = encrypted_code[::-1]  # Simple reverse decryption
-        decrypted_file_name = f"decrypted_{file_name}"
-
-        with open(decrypted_file_name, "w") as f:
-            f.write(decrypted_code)
-
-        log_and_notify(f"Decrypted file: {file_name} -> {decrypted_file_name}")
-        print_colored(f"[•] Code decrypted successfully and saved as {decrypted_file_name}", Colors.OKGREEN)
-    else:
-        print_colored("[•] File does not exist!", Colors.FAIL)
-
-    input("[•] Press Enter to return to the main menu...")
-
 # Proxy Options function
 def proxy_options():
     print_colored("[•] Proxy Options", Colors.OKCYAN)
@@ -129,6 +106,30 @@ def generate_and_check_proxies():
     # Placeholder function
     print_colored("[•] Generating and checking proxies...", Colors.OKCYAN)
     pass
+
+# Function to check for script updates from GitHub
+def check_for_updates():
+    print_colored("[•] Checking for updates from GitHub...", Colors.OKCYAN)
+    github_url = "https://raw.githubusercontent.com/t9cxy/alone-menu/refs/heads/main/main.py"
+    try:
+        response = requests.get(github_url)
+        if response.status_code == 200:
+            latest_script = response.text
+            with open("main.py", "r") as current_file:
+                current_script = current_file.read()
+            
+            if latest_script != current_script:
+                print_colored("[•] Update found! Updating the script...", Colors.OKGREEN)
+                with open("main.py", "w") as file:
+                    file.write(latest_script)
+                print_colored("[•] Script updated successfully!", Colors.OKGREEN)
+                log_and_notify("Script updated from GitHub.")
+            else:
+                print_colored("[•] No updates found. You have the latest version.", Colors.OKGREEN)
+        else:
+            print_colored("[•] Error fetching script from GitHub.", Colors.FAIL)
+    except Exception as e:
+        print_colored(f"[•] Error: {e}", Colors.FAIL)
 
 # Main menu options
 def main_menu():
@@ -177,7 +178,8 @@ def main_menu():
         print_colored("[•] Invalid option! Returning to main menu...", Colors.FAIL)
         input("[•] Press Enter to return to the main menu...")
 
-# Run the main menu
+# Run the main menu and check for updates after completing tasks
 if __name__ == "__main__":
     while True:
         main_menu()
+        check_for_updates()
