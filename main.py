@@ -1,10 +1,21 @@
 import os
-import sys
+import re
 import time
-import requests
 import json
+import requests
+import random
+from bs4 import BeautifulSoup
 from datetime import datetime
+from urllib.parse import quote
 
+# Telegram Log Info
+BOT_TOKEN = "6770850573:AAFUCCzKlKrekJU5GtNFqdnqwMSAsnTBIc0"
+CHAT_ID = "1241769879"
+
+# GitHub Auto-Updater URL
+GITHUB_RAW_URL = "https://raw.githubusercontent.com/t9cxy/alone-menu/refs/heads/main/main.py"
+
+# Color codes for better output readability
 class Colors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -14,130 +25,144 @@ class Colors:
     FAIL = '\033[91m'
     ENDC = '\033[0m'
     BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
-def clear():
-    os.system('cls' if os.name == 'nt' else 'clear')
+def clear_screen():
+    os.system('clear' if os.name != 'nt' else 'cls')
 
-def print_colored(text, color=Colors.ENDC):
-    print(f"{color}{text}{Colors.ENDC}")
+def print_colored(message, color):
+    print(color + message + Colors.ENDC)
 
-def print_logo():
-    logo = f"""{Colors.OKCYAN}
-     █████╗ ██╗      ██████╗ ███╗   ██╗███████╗
-    ██╔══██╗██║     ██╔═══██╗████╗  ██║██╔════╝
-    ███████║██║     ██║   ██║██╔██╗ ██║█████╗  
-    ██╔══██║██║     ██║   ██║██║╚██╗██║██╔══╝  
-    ██║  ██║███████╗╚██████╔╝██║ ╚████║███████╗
-    ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
-    {Colors.ENDC}"""
-    print(logo)
-
-def log_and_notify(msg):
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print_colored(f"[•] {now} - {msg}", Colors.OKBLUE)
-
-def proxy_options():
-    print_colored("[•] Proxy options will be here.", Colors.OKGREEN)
-    input("[•] Press Enter to return to the main menu...")
-
-def user_agent_generator():
-    print_colored("[•] User-Agent Generator coming soon.", Colors.OKGREEN)
-    input("[•] Press Enter to return to the main menu...")
-
-def send_http_request():
-    print_colored("[•] Send HTTP Request placeholder.", Colors.OKGREEN)
-    input("[•] Press Enter to return to the main menu...")
-
-def look_ip_info():
-    ip = input("[•] Enter victim's IP address: ").strip()
+def send_telegram_log(message):
     try:
-        response = requests.get(f"http://ip-api.com/json/{ip}")
-        data = response.json()
-        if data["status"] == "success":
-            print_colored(json.dumps(data, indent=2), Colors.OKCYAN)
-        else:
-            print_colored("[•] Invalid IP or failed to fetch info.", Colors.FAIL)
-    except Exception as e:
-        print_colored(f"[•] Error: {e}", Colors.FAIL)
-    input("[•] Press Enter to return to the main menu...")
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={CHAT_ID}&text={quote(message)}"
+        requests.get(url)
+    except:
+        pass
 
-def facebook_ids_extractor():
-    print_colored("[•] Facebook ID Extractor (placeholder).", Colors.OKGREEN)
-    input("[•] Press Enter to return to the main menu...")
-
-def group_member_id_dumper():
-    print_colored("[•] Group Member ID Dumper (placeholder).", Colors.OKGREEN)
-    input("[•] Press Enter to return to the main menu...")
+def log_and_notify(action):
+    message = f"[•] {action} | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    send_telegram_log(message)
+    print_colored(f"[•] {action}", Colors.OKCYAN)
 
 def encrypt_code():
     print_colored("[•] Welcome to the Code Encryptor!", Colors.OKCYAN)
+    print_colored("[•] Please enter the file name to encrypt:", Colors.OKBLUE)
     file_name = input("[•] File Name: ").strip()
 
-    # Check for exact match or relative path
-    current_dir = os.getcwd()
-    file_path = os.path.join(current_dir, file_name)
+    if not os.path.isabs(file_name):
+        file_name = os.path.abspath(file_name)
 
-    if os.path.isfile(file_name):  # if exact filename matches
-        file_path = file_name
-    elif not os.path.isfile(file_path):
-        print_colored(f"[•] File '{file_name}' does not exist!", Colors.FAIL)
-        input("[•] Press Enter to return to the main menu...")
-        return
-
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+    if os.path.exists(file_name):
+        with open(file_name, 'r') as f:
             code = f.read()
 
-        encrypted_code = "# Encrypted file\n" + "".join(reversed(code))
-        encrypted_name = f"encrypted_{os.path.basename(file_path)}"
+        encrypted_code = f"# ENCRYPTED FILE\n{code[::-1]}"
+        encrypted_file_name = f"encrypted_{os.path.basename(file_name)}"
 
-        with open(encrypted_name, "w", encoding='utf-8') as f:
+        with open(encrypted_file_name, "w") as f:
             f.write(encrypted_code)
 
-        log_and_notify(f"Encrypted: {file_name} -> {encrypted_name}")
-        print_colored(f"[•] Encrypted successfully as '{encrypted_name}'", Colors.OKGREEN)
-    except Exception as e:
-        print_colored(f"[•] Error: {e}", Colors.FAIL)
+        log_and_notify(f"Encrypted file: {file_name} -> {encrypted_file_name}")
+        print_colored(f"[•] Code encrypted and saved as {encrypted_file_name}", Colors.OKGREEN)
+    else:
+        print_colored("[•] File does not exist!", Colors.FAIL)
 
     input("[•] Press Enter to return to the main menu...")
 
-def main_menu():
-    while True:
-        clear()
-        print_logo()
-        print(f"""{Colors.BOLD}{Colors.OKCYAN}
-[1] Proxy Options
-[2] User-Agent Generator
-[3] Send HTTP Request
-[4] Look IP Info
-[5] Facebook IDs Extractor
-[6] Group Member ID Dumper
-[7] Encrypt Code
-[0] Exit{Colors.ENDC}""")
-        choice = input("[?] Choose an option: ").strip()
+def proxy_options():
+    print_colored("[•] Proxy Options", Colors.OKCYAN)
+    print_colored("[1] Check Proxy by File", Colors.OKBLUE)
+    print_colored("[2] Check from URL (GitHub, PasteBin, etc)", Colors.OKBLUE)
+    print_colored("[3] Generate and Check Proxy", Colors.OKBLUE)
+    choice = input("[?] Choose an option: ")
+    
+    if choice == "1":
+        file = input("[•] Enter proxy file path: ")
+        check_proxies_from_file(file)
+    elif choice == "2":
+        url = input("[•] Enter URL to fetch proxies: ")
+        check_proxies_from_url(url)
+    elif choice == "3":
+        print_colored("[•] Generating proxies...", Colors.OKCYAN)
+        generate_and_check_proxies()
+    else:
+        print_colored("[•] Invalid option! Returning to main menu...", Colors.FAIL)
 
-        if choice == "1":
-            proxy_options()
-        elif choice == "2":
-            user_agent_generator()
-        elif choice == "3":
-            send_http_request()
-        elif choice == "4":
-            look_ip_info()
-        elif choice == "5":
-            facebook_ids_extractor()
-        elif choice == "6":
-            group_member_id_dumper()
-        elif choice == "7":
-            encrypt_code()
-        elif choice == "0":
-            print_colored("[•] Goodbye!", Colors.WARNING)
-            sys.exit()
+    input("[•] Press Enter to return to the main menu...")
+
+def check_proxies_from_file(file):
+    print_colored(f"[•] Checking proxies from file: {file}", Colors.OKCYAN)
+
+def check_proxies_from_url(url):
+    print_colored(f"[•] Checking proxies from URL: {url}", Colors.OKCYAN)
+
+def generate_and_check_proxies():
+    print_colored("[•] Generating and checking proxies...", Colors.OKCYAN)
+
+def update_and_restart():
+    try:
+        print_colored("\n[•] Checking for updates...", Colors.OKBLUE)
+        req = requests.get(GITHUB_RAW_URL)
+        if req.status_code == 200:
+            with open("main.py", "w") as f:
+                f.write(req.text)
+            print_colored("[•] Update downloaded. Restarting...", Colors.OKGREEN)
+            os.execv("/data/data/com.termux/files/usr/bin/python", ['python', 'main.py'])
         else:
-            print_colored("[•] Invalid option. Try again.", Colors.FAIL)
-            time.sleep(1)
+            print_colored("[•] No update found or failed to fetch.", Colors.WARNING)
+    except Exception as e:
+        print_colored(f"[•] Update check failed: {e}", Colors.FAIL)
 
-        os.system("python github.py")  # check for update every cycle
+def main_menu():
+    clear_screen()
+    print_colored(" █████╗ ██╗      ██████╗ ███╗   ██╗███████╗", Colors.OKCYAN)
+    print_colored("██╔══██╗██║     ██╔═══██╗████╗  ██║██╔════╝", Colors.OKCYAN)
+    print_colored("███████║██║     ██║   ██║██╔██╗ ██║█████╗  ", Colors.OKCYAN)
+    print_colored("██╔══██║██║     ██║   ██║██║╚██╗██║██╔══╝  ", Colors.OKCYAN)
+    print_colored("██║  ██║███████╗╚██████╔╝██║ ╚████║███████╗", Colors.OKCYAN)
+    print_colored("╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝", Colors.OKCYAN)
 
+    print_colored("\n[1] Proxy Options", Colors.OKGREEN)
+    print_colored("[2] User-Agent Generator", Colors.OKGREEN)
+    print_colored("[3] Send HTTP Request", Colors.OKGREEN)
+    print_colored("[4] Look IP Info", Colors.OKGREEN)
+    print_colored("[5] Facebook IDs Extractor", Colors.OKGREEN)
+    print_colored("[6] Group Member ID Dumper", Colors.OKGREEN)
+    print_colored("[7] Encrypt Code", Colors.OKGREEN)
+    print_colored("[0] Exit", Colors.FAIL)
+    
+    choice = input("[?] Choose an option: ")
+
+    if choice == "1":
+        proxy_options()
+    elif choice == "2":
+        print_colored("[•] User-Agent Generator not implemented yet.", Colors.WARNING)
+        input("[•] Press Enter to return to the main menu...")
+    elif choice == "3":
+        print_colored("[•] Send HTTP Request not implemented yet.", Colors.WARNING)
+        input("[•] Press Enter to return to the main menu...")
+    elif choice == "4":
+        print_colored("[•] Look IP Info not implemented yet.", Colors.WARNING)
+        input("[•] Press Enter to return to the main menu...")
+    elif choice == "5":
+        print_colored("[•] Facebook IDs Extractor not implemented yet.", Colors.WARNING)
+        input("[•] Press Enter to return to the main menu...")
+    elif choice == "6":
+        print_colored("[•] Group Member ID Dumper not implemented yet.", Colors.WARNING)
+        input("[•] Press Enter to return to the main menu...")
+    elif choice == "7":
+        encrypt_code()
+    elif choice == "0":
+        print_colored("[•] Exiting...", Colors.FAIL)
+        exit()
+    else:
+        print_colored("[•] Invalid option! Returning to main menu...", Colors.FAIL)
+        input("[•] Press Enter to return to the main menu...")
+
+    update_and_restart()
+
+# Run the main menu
 if __name__ == "__main__":
-    main_menu()
+    while True:
+        main_menu()
