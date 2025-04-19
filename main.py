@@ -153,4 +153,4 @@ def main_menu():
 # Run the main menu
 if __name__ == "__main__":
     while True:
-        main_menu()l
+        main_menu()
