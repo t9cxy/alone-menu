@@ -24,42 +24,68 @@ class Colors:
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
+# Function to send logs to Telegram
+def send_telegram_log(message):
+    bot_token = "6770850573:AAFUCCzKlKrekJU5GtNFqdnqwMSAsnTBIc0"  # Your bot token
+    chat_id = "1241769879"  # Your chat ID
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage?chat_id={chat_id}&text={quote(message)}"
+    try:
+        requests.get(url)
+    except Exception as e:
+        print(f"[•] Error sending log to Telegram: {e}")
+
 # Function to print colorful and styled messages
 def print_colored(message, color):
     print(color + message + Colors.ENDC)
 
-# Function for encryption options (simplified)
+# Function to log and notify via Telegram about each action
+def log_and_notify(action):
+    message = f"[•] {action} | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    send_telegram_log(message)
+    print_colored(f"[•] {action}", Colors.OKCYAN)
+
+# Encrypt Code Function
 def encrypt_code():
     print_colored("[•] Welcome to the Code Encryptor!", Colors.OKCYAN)
-    print_colored("[•] Choose a programming language for encryption:", Colors.OKBLUE)
-    print_colored("1. Python", Colors.OKGREEN)
-    print_colored("2. JavaScript", Colors.OKGREEN)
-    choice = input("[?] Choose an option: ")
-    
-    if choice == "1":
-        print_colored("[•] Python Encryption selected", Colors.OKCYAN)
-        # Simulate Python code obfuscation
-        print_colored("[•] Encrypting Python code...", Colors.OKBLUE)
-        code = input("[•] Enter your Python code to encrypt: ")
-        encrypted_code = f"Encrypted Python Code: {code[::-1]}"  # Simple reverse encryption for example
-        print_colored(f"[•] Encrypted Code:\n{encrypted_code}", Colors.OKGREEN)
-        with open("encrypted_code.py", "w") as f:
-            f.write(encrypted_code)
-        print_colored("[•] Code encrypted successfully and saved as encrypted_code.py", Colors.OKGREEN)
+    print_colored("[•] Please enter the file name to encrypt:", Colors.OKBLUE)
+    file_name = input("[•] File Name: ")
 
-    elif choice == "2":
-        print_colored("[•] JavaScript Encryption selected", Colors.OKCYAN)
-        # Simulate JavaScript code obfuscation
-        print_colored("[•] Encrypting JavaScript code...", Colors.OKBLUE)
-        code = input("[•] Enter your JavaScript code to encrypt: ")
-        encrypted_code = f"Encrypted JavaScript Code: {code[::-1]}"  # Simple reverse encryption for example
-        print_colored(f"[•] Encrypted Code:\n{encrypted_code}", Colors.OKGREEN)
-        with open("encrypted_code.js", "w") as f:
-            f.write(encrypted_code)
-        print_colored("[•] Code encrypted successfully and saved as encrypted_code.js", Colors.OKGREEN)
+    if os.path.exists(file_name):
+        with open(file_name, 'r') as f:
+            code = f.read()
+        encrypted_code = f"Encrypted Code: {code[::-1]}"  # Simple reverse encryption for example
+        encrypted_file_name = f"encrypted_{file_name}"
 
+        with open(encrypted_file_name, "w") as f:
+            f.write(encrypted_code)
+        
+        log_and_notify(f"Encrypted file: {file_name} -> {encrypted_file_name}")
+        print_colored(f"[•] Code encrypted successfully and saved as {encrypted_file_name}", Colors.OKGREEN)
     else:
-        print_colored("[•] Invalid option! Returning to main menu...", Colors.FAIL)
+        print_colored("[•] File does not exist!", Colors.FAIL)
+
+    input("[•] Press Enter to return to the main menu...")
+
+# Decrypt Code Function (in owner.py)
+def decrypt_code():
+    print_colored("[•] Welcome to the Code Decryptor!", Colors.OKCYAN)
+    print_colored("[•] Please enter the file name to decrypt:", Colors.OKBLUE)
+    file_name = input("[•] File Name: ")
+
+    if os.path.exists(file_name):
+        with open(file_name, 'r') as f:
+            encrypted_code = f.read()
+        
+        decrypted_code = encrypted_code[::-1]  # Simple reverse decryption
+        decrypted_file_name = f"decrypted_{file_name}"
+
+        with open(decrypted_file_name, "w") as f:
+            f.write(decrypted_code)
+
+        log_and_notify(f"Decrypted file: {file_name} -> {decrypted_file_name}")
+        print_colored(f"[•] Code decrypted successfully and saved as {decrypted_file_name}", Colors.OKGREEN)
+    else:
+        print_colored("[•] File does not exist!", Colors.FAIL)
 
     input("[•] Press Enter to return to the main menu...")
 
