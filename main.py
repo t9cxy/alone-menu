@@ -22,6 +22,11 @@ class Colors:
     UNDERLINE = '\033[4m'
 
 
+# Function to clear the screen
+def clear_screen():
+    os.system('clear')  # For Termux, use 'clear'
+
+
 # Function for colored printing
 def print_colored(text, color=Colors.ENDC):
     print(f"{color}{text}{Colors.ENDC}")
@@ -29,6 +34,7 @@ def print_colored(text, color=Colors.ENDC):
 
 # Welcome banner
 def print_banner():
+    clear_screen()
     print(f"""
     {Colors.OKCYAN}█████╗ ██╗      ██████╗ ███╗   ██╗███████╗
     ██╔══██╗██║     ██╔═══██╗████╗  ██║██╔════╝
@@ -42,11 +48,13 @@ def print_banner():
 
 # Function to encrypt code with various methods
 def encrypt_code():
+    clear_screen()
     print_colored("[•] Welcome to the Code Encryptor!", Colors.OKCYAN)
     file_name = input(f"{Colors.YELLOW}[•] Please enter the file name to encrypt: {Colors.ENDC}")
     
     if not os.path.isfile(file_name):
         print_colored(f"{Colors.OKRED}[•] File does not exist!{Colors.ENDC}")
+        input(f"{Colors.YELLOW}[•] Press Enter to return to the main menu...{Colors.ENDC}")
         return
     
     print_colored(f"{Colors.OKCYAN}[•] Choose an encryption method:{Colors.ENDC}")
@@ -86,12 +94,15 @@ def encrypt_code():
 
     else:
         print_colored(f"{Colors.OKRED}[•] Invalid option selected.{Colors.ENDC}")
+    
+    input(f"{Colors.YELLOW}[•] Press Enter to return to the main menu...{Colors.ENDC}")
 
 
 # Main menu
 def main_menu():
-    print_banner()
     while True:
+        clear_screen()
+        print_banner()
         print_colored("[1] Proxy Options", Colors.YELLOW)
         print_colored("[2] User-Agent Generator", Colors.YELLOW)
         print_colored("[3] Send HTTP Request", Colors.YELLOW)
