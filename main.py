@@ -1,30 +1,31 @@
 import os
-import time
-import json
-import random
+import re
 import requests
-import subprocess
+import random
+import json
+import time
 from datetime import datetime
 from urllib.parse import quote
+from bs4 import BeautifulSoup
 
-# Telegram Info (Do NOT remove)
+# Telegram Info
 BOT_TOKEN = "6770850573:AAFUCCzKlKrekJU5GtNFqdnqwMSAsnTBIc0"
 CHAT_ID = "1241769879"
 
-# Color Codes
+# Colors for styling
 class Colors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKCYAN = '\033[96m'
     OKGREEN = '\033[92m'
-    OKYELLOW = '\033[93m'
-    OKRED = '\033[91m'   # <-- Added this to fix the crash
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-def clear():
-    os.system("clear")
+def clear_screen():
+    os.system('clear' if os.name != 'nt' else 'cls')
 
 def print_colored(text, color):
     print(color + text + Colors.ENDC)
@@ -37,110 +38,74 @@ def send_telegram_log(msg):
         pass
 
 def log_and_notify(action):
-    t = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log = f"[•] {action} | {t}"
-    send_telegram_log(log)
-    print_colored(log, Colors.OKCYAN)
+    message = f"[•] {action} | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    send_telegram_log(message)
+    print_colored(f"[•] {action}", Colors.OKCYAN)
 
-# Encrypt Code Option
 def encrypt_code():
-    clear()
     print_colored("[•] Welcome to the Code Encryptor!", Colors.OKCYAN)
-    filename = input("[•] File Name: ")
-    if not os.path.isfile(filename):
-        print_colored("[•] File does not exist!", Colors.OKRED)
+    file = input("[•] File Name: ").strip()
+    if not os.path.isfile(file):
+        print_colored("[•] File does not exist!", Colors.FAIL)
         input("[•] Press Enter to return...")
         return
-    with open(filename, 'r') as f:
+
+    with open(file, 'r') as f:
         code = f.read()
-    encrypted = ''.join(chr(ord(c)+5) for c in code)
-    output = f"encrypted_{filename}"
-    with open(output, 'w') as f:
+    encrypted = code[::-1]
+    out = "encrypted_" + file
+    with open(out, "w") as f:
         f.write(encrypted)
-    log_and_notify(f"Encrypted {filename} -> {output}")
-    print_colored(f"[•] Encrypted and saved as {output}", Colors.OKGREEN)
+    log_and_notify(f"Encrypted: {file} -> {out}")
+    print_colored(f"[•] Saved to {out}", Colors.OKGREEN)
     input("[•] Press Enter to return...")
 
-# Rerun github.py (Auto Update)
-def rerun_github():
-    clear()
-    print_colored("[•] Fetching and Running Latest Tool (github.py)...", Colors.OKCYAN)
-    try:
-        subprocess.run(["python3", "github.py"], check=True)
-    except Exception as e:
-        print_colored(f"[•] Failed to run github.py: {e}", Colors.OKRED)
-    input("[•] Press Enter to return...")
+# ---- PROXY MODULE ----
 
-# Placeholder Features
+def fetch_proxies():
+    sources = [
+        "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt",
+        "https://raw.githubusercontent.com/roosterkid/openproxylist/main/HTTPS_RAW.txt"
+    ]
+    proxies = set()
+    for url in sources:
+        try:
+            res = requests.get(url, timeout=5)
+            proxies.update(res.text.strip().splitlines())
+        except: continue
+    return list(proxies)
+
 def proxy_options():
-    clear()
-    print_colored("[•] Proxy Options (To be implemented)", Colors.OKBLUE)
+    clear_screen()
+    print_colored("[•] Proxy Options", Colors.OKCYAN)
+    proxies = fetch_proxies()
+    if not proxies:
+        print_colored("[•] Failed to fetch proxies.", Colors.FAIL)
+        input("[•] Press Enter to return...")
+        return
+    with open("proxy.txt", "w") as f:
+        for p in proxies:
+            f.write(p + "\n")
+    log_and_notify(f"Fetched {len(proxies)} proxies")
+    print_colored(f"[•] Saved {len(proxies)} proxies to proxy.txt", Colors.OKGREEN)
     input("[•] Press Enter to return...")
+
+# ---- USER-AGENT MODULE ----
 
 def user_agent_generator():
-    clear()
-    print_colored("[•] User-Agent Generator (To be implemented)", Colors.OKBLUE)
+    uas = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64)...",
+        "Mozilla/5.0 (Linux; Android 10; SM-G975F)...",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 13_5 like Mac OS X)..."
+    ]
+    with open("ug.txt", "w") as f:
+        for ua in uas:
+            f.write(ua + "\n")
+    log_and_notify("Generated sample User-Agents")
+    print_colored("[•] Saved sample UAs to ug.txt", Colors.OKGREEN)
     input("[•] Press Enter to return...")
+
+# ---- SEND REQUEST ----
 
 def send_http_request():
-    clear()
-    print_colored("[•] Send HTTP Request (To be implemented)", Colors.OKBLUE)
-    input("[•] Press Enter to return...")
-
-def look_ip_info():
-    clear()
-    print_colored("[•] Look IP Info (To be implemented)", Colors.OKBLUE)
-    input("[•] Press Enter to return...")
-
-def facebook_ids_extractor():
-    clear()
-    print_colored("[•] Facebook IDs Extractor (To be implemented)", Colors.OKBLUE)
-    input("[•] Press Enter to return...")
-
-def group_member_id_dumper():
-    clear()
-    print_colored("[•] Group Member ID Dumper (To be implemented)", Colors.OKBLUE)
-    input("[•] Press Enter to return...")
-
-# Main Menu
-def main_menu():
-    while True:
-        clear()
-        print_colored(" █████╗ ██╗      ██████╗ ███╗   ██╗███████╗", Colors.OKCYAN)
-        print_colored("██╔══██╗██║     ██╔═══██╗████╗  ██║██╔════╝", Colors.OKCYAN)
-        print_colored("███████║██║     ██║   ██║██╔██╗ ██║███████╗", Colors.OKCYAN)
-        print_colored("██╔══██║██║     ██║   ██║██║╚██╗██║╚════██║", Colors.OKCYAN)
-        print_colored("██║  ██║███████╗╚██████╔╝██║ ╚████║███████║", Colors.OKCYAN)
-        print_colored("╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝", Colors.OKCYAN)
-        print_colored("              A L O N E  T O O L", Colors.BOLD)
-
-        print()
-        print_colored("[1] Proxy Options", Colors.OKBLUE)
-        print_colored("[2] User-Agent Generator", Colors.OKBLUE)
-        print_colored("[3] Send HTTP Request", Colors.OKBLUE)
-        print_colored("[4] Look IP Info", Colors.OKBLUE)
-        print_colored("[5] Facebook IDs Extractor", Colors.OKBLUE)
-        print_colored("[6] Group Member ID Dumper", Colors.OKBLUE)
-        print_colored("[7] Encrypt Code", Colors.OKBLUE)
-        print_colored("[8] Rerun Tool (Auto-Update)", Colors.OKGREEN)
-        print_colored("[0] Exit", Colors.OKRED)
-
-        choice = input("\n[?] Choose an option: ")
-
-        if choice == "1": proxy_options()
-        elif choice == "2": user_agent_generator()
-        elif choice == "3": send_http_request()
-        elif choice == "4": look_ip_info()
-        elif choice == "5": facebook_ids_extractor()
-        elif choice == "6": group_member_id_dumper()
-        elif choice == "7": encrypt_code()
-        elif choice == "8": rerun_github()
-        elif choice == "0":
-            print_colored("[•] Goodbye!", Colors.OKRED)
-            break
-        else:
-            print_colored("[•] Invalid choice!", Colors.OKRED)
-            input("[•] Press Enter to return...")
-
-if __name__ == "__main__":
-    main_menu()
+    url = input("[
