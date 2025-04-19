@@ -55,6 +55,11 @@ def login():
     
     username = input(f"{Colors.OKBLUE}[•] Enter your username: {Colors.ENDC}")
     
+    # Check if the username is valid (non-empty)
+    if not username.strip():
+        print(f"{Colors.FAIL}[•] Invalid username! Please enter a valid username.{Colors.ENDC}")
+        return
+    
     # Get the user's IP and geolocation
     ip, geo_location = get_ip_info()
     datetime_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
