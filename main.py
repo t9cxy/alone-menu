@@ -1,128 +1,76 @@
 import time
-import re
+import random
 import os
-import requests
-from bs4 import BeautifulSoup
+import sys
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.chrome.service import Service as ChromeService
 
-# Initialize Selenium WebDriver
-driver = webdriver.Chrome()  # Ensure chromedriver is in your PATH
+def setup_chrome_driver():
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Run Chrome in headless mode
+    chrome_options.add_argument("--no-sandbox")  # Avoid sandboxing for Termux
+    chrome_options.add_argument("--disable-dev-shm-usage")  # Disable /dev/shm usage
+    
+    # Path to chromedriver
+    driver_path = '/data/data/com.termux/files/usr/bin/chromedriver'
+    
+    # Set up the service for the Chrome driver
+    service = ChromeService(executable_path=driver_path)
+    
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    return driver
 
-# -------------------------- ASCII Art --------------------------
-def print_logo():
-    print("""
-█████╗ ██╗      ██████╗ ███╗   ██╗███████╗
-██╔══██╗██║     ██╔═══██╗████╗  ██║██╔════╝
-███████║██║     ██║   ██║██╔██╗ ██║█████╗  
-██╔══██║██║     ██║   ██║██║╚██╗██║██╔══╝  
-██║  ██║███████╗╚██████╔╝██║ ╚████║███████╗
-╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
-    """)
+def get_facebook_ids(target_url):
+    driver = setup_chrome_driver()
 
-# -------------------------- Proxy Generator --------------------------
-def generate_proxies():
-    # Proxy generation logic (simplified here)
-    proxy_list = []
-    for _ in range(10):  # Change to your desired proxy count
-        proxy = "ip:port"
-        proxy_list.append(proxy)
-    return proxy_list
-
-# -------------------------- Facebook ID Extractor --------------------------
-def login_facebook(email, password):
-    driver.get('https://www.facebook.com/')
+    driver.get(f'https://www.facebook.com/{target_url}')
     time.sleep(2)
-    driver.find_element(By.ID, 'email').send_keys(email)
-    driver.find_element(By.ID, 'pass').send_keys(password)
-    driver.find_element(By.NAME, 'login').click()
-    time.sleep(5)  # Wait for login to complete
 
-def get_friends(profile_url):
-    driver.get(profile_url)
-    time.sleep(5)
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
-    friends = []
-    for link in soup.find_all('a', href=True):
-        href = link['href']
-        name = link.get_text()
-        if '/profile.php?id=' in href:
-            uid = re.search(r'id=(\d+)', href).group(1)
-            friends.append((uid, name))
-        elif href.startswith('/'):
-            uid = href.strip('/').split('?')[0]
-            friends.append((uid, name))
-    return friends
+    # Extract Friends' IDs (recursively)
+    ids = []
+    try:
+        friends_section = driver.find_element(By.XPATH, "//a[contains(@href, '/friends')]")
+        friends_section.click()
+        time.sleep(2)
+        
+        # Extract IDs of friends
+        friend_links = driver.find_elements(By.XPATH, "//a[contains(@href, '/profile.php?id=')]")
+        for link in friend_links:
+            id = link.get_attribute('href').split('id=')[1]
+            name = link.text
+            ids.append(f'{id} | {name}')
 
-def extract_ids(email, password, target_profile):
-    login_facebook(email, password)
-    first_level_friends = get_friends(target_profile)
-    all_friends = set(first_level_friends)
-    for uid, _ in first_level_friends:
-        friend_profile = f'https://www.facebook.com/profile.php?id={uid}'
-        friends_of_friend = get_friends(friend_profile)
-        all_friends.update(friends_of_friend)
-    with open('ids.txt', 'w', encoding='utf-8') as f:
-        for uid, name in all_friends:
-            f.write(f'{uid} | {name}\n')
+        # Extract IDs of Friends' Friends
+        friends_friends = driver.find_elements(By.XPATH, "//a[contains(@href, '/profile.php?id=')]")
+        for friend in friends_friends:
+            id = friend.get_attribute('href').split('id=')[1]
+            name = friend.text
+            if f'{id} | {name}' not in ids:
+                ids.append(f'{id} | {name}')
 
-# -------------------------- Menu Options --------------------------
-def display_menu():
-    print_logo()
-    print("\n[1] Proxy Options")
-    print("[2] Facebook ID Extractor")
-    print("[3] Send Feedback")
-    print("[4] Exit\n")
+    except Exception as e:
+        print(f'[ERROR] {str(e)}')
 
-def proxy_menu():
-    print("\n[1] Check Proxy By File")
-    print("[2] Check From URL (GitHub, PasteBin, etc.)")
-    print("[3] Generate and Check Proxy\n")
+    # Save IDs to ids.txt
+    with open('ids.txt', 'w') as f:
+        for item in ids:
+            f.write(f"{item}\n")
 
-def facebook_ids_extractor():
-    print("[*] Enter Facebook email and password:")
-    email = input("Email: ")
-    password = input("Password: ")
-    target_profile = input("Enter Target Profile URL: ")
-    print("[*] Extracting IDs...")
-
-    extract_ids(email, password, target_profile)
-    print("[*] Extraction complete. Results saved in 'ids.txt'")
-
-def send_feedback():
-    feedback = input("Enter your feedback: ")
-    print("[*] Sending feedback...")  # Replace with your actual feedback handling code
-    time.sleep(1)
-    print("[*] Feedback sent successfully.")
+    print(f'[INFO] IDs extracted and saved to ids.txt')
 
 def main():
-    while True:
-        display_menu()
-        choice = input("Choose an option: ")
+    print("Welcome to Facebook ID Extractor")
+    target_url = input("Enter the target profile ID or URL: ").strip()
 
-        if choice == '1':
-            proxy_menu()
-            proxy_choice = input("Choose proxy option: ")
-            if proxy_choice == '1':
-                print("[*] Check Proxy By File (Functionality to be implemented)")
-            elif proxy_choice == '2':
-                print("[*] Check Proxy From URL (Functionality to be implemented)")
-            elif proxy_choice == '3':
-                proxies = generate_proxies()
-                print("\n[ GOOD ] Proxy Generation Results:")
-                for proxy in proxies:
-                    print(f"[ {proxy} ]")
+    get_facebook_ids(target_url)
 
-        elif choice == '2':
-            facebook_ids_extractor()
+    print("[ ! ] Extraction completed. Check ids.txt for results.")
+    input("[Enter] to go back to the menu...")
 
-        elif choice == '3':
-            send_feedback()
-
-        elif choice == '4':
-            print("[*] Exiting...")
-            driver.quit()  # Close the Selenium WebDriver
-            break
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
