@@ -7,6 +7,7 @@ import random
 from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.parse import quote
+import subprocess  # To rerun github.py script
 
 # Your Telegram Bot Info
 BOT_TOKEN = "6770850573:AAFUCCzKlKrekJU5GtNFqdnqwMSAsnTBIc0"
@@ -103,52 +104,81 @@ def check_proxies_from_url(url):
 def generate_and_check_proxies():
     print_colored("[•] Generating and checking proxies...", Colors.OKCYAN)
 
+# Function to rerun github.py
+def rerun_github_script():
+    print_colored("[•] Rerunning github.py to fetch the latest version of the tool...", Colors.OKCYAN)
+    try:
+        # Running the github.py script using subprocess
+        subprocess.run(["python3", "github.py"], check=True)
+        print_colored("[•] github.py has been rerun successfully.", Colors.OKGREEN)
+    except subprocess.CalledProcessError as e:
+        print_colored(f"[•] Error running github.py: {e}", Colors.FAIL)
+
 # Main menu options
 def main_menu():
     clear_screen()
     print_colored(" █████╗ ██╗      ██████╗ ███╗   ██╗███████╗", Colors.OKCYAN)
     print_colored("██╔══██╗██║     ██╔═══██╗████╗  ██║██╔════╝", Colors.OKCYAN)
-    print_colored("███████║██║     ██║   ██║██╔██╗ ██║█████╗  ", Colors.OKCYAN)
-    print_colored("██╔══██║██║     ██║   ██║██║╚██╗██║██╔══╝  ", Colors.OKCYAN)
-    print_colored("██║  ██║███████╗╚██████╔╝██║ ╚████║███████╗", Colors.OKCYAN)
+    print_colored("███████║██║     ██║   ██║██╔██╗ ██║███████╗", Colors.OKCYAN)
+    print_colored("██╔══██║██║     ██║   ██║██║╚██╗██║╚════██║", Colors.OKCYAN)
+    print_colored("██║  ██║███████╗╚██████╔╝██║ ╚████║███████║", Colors.OKCYAN)
     print_colored("╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝", Colors.OKCYAN)
-
-    print_colored("\n[1] Proxy Options", Colors.OKGREEN)
-    print_colored("[2] User-Agent Generator", Colors.OKGREEN)
-    print_colored("[3] Send HTTP Request", Colors.OKGREEN)
-    print_colored("[4] Look IP Info", Colors.OKGREEN)
-    print_colored("[5] Facebook IDs Extractor", Colors.OKGREEN)
-    print_colored("[6] Group Member ID Dumper", Colors.OKGREEN)
-    print_colored("[7] Encrypt Code", Colors.OKGREEN)
-    print_colored("[0] Exit", Colors.FAIL)
+    print_colored("[•] Welcome to the Tool! Choose an option:", Colors.OKCYAN)
+    print_colored("[1] Proxy Options", Colors.OKBLUE)
+    print_colored("[2] User-Agent Generator", Colors.OKBLUE)
+    print_colored("[3] Send HTTP Request", Colors.OKBLUE)
+    print_colored("[4] Look IP Info", Colors.OKBLUE)
+    print_colored("[5] Facebook IDs Extractor", Colors.OKBLUE)
+    print_colored("[6] Group Member ID Dumper", Colors.OKBLUE)
+    print_colored("[7] Encrypt Code", Colors.OKBLUE)
+    print_colored("[8] Rerun Tool (Update)", Colors.OKGREEN)
+    print_colored("[0] Exit", Colors.OKRED)
     
     choice = input("[?] Choose an option: ")
 
     if choice == "1":
         proxy_options()
     elif choice == "2":
-        print_colored("[•] User-Agent Generator not implemented here.", Colors.WARNING)
-        input("[•] Press Enter to return to the main menu...")
+        user_agent_generator()
     elif choice == "3":
-        print_colored("[•] Send HTTP Request not implemented here.", Colors.WARNING)
-        input("[•] Press Enter to return to the main menu...")
+        send_http_request()
     elif choice == "4":
-        print_colored("[•] Look IP Info not implemented here.", Colors.WARNING)
-        input("[•] Press Enter to return to the main menu...")
+        look_ip_info()
     elif choice == "5":
-        print_colored("[•] Facebook IDs Extractor not implemented here.", Colors.WARNING)
-        input("[•] Press Enter to return to the main menu...")
+        facebook_ids_extractor()
     elif choice == "6":
-        print_colored("[•] Group Member ID Dumper not implemented here.", Colors.WARNING)
-        input("[•] Press Enter to return to the main menu...")
+        group_member_id_dumper()
     elif choice == "7":
         encrypt_code()
+    elif choice == "8":
+        rerun_github_script()
     elif choice == "0":
-        print_colored("[•] Exiting...", Colors.FAIL)
+        print_colored("[•] Exiting the tool. Goodbye!", Colors.FAIL)
         exit()
     else:
         print_colored("[•] Invalid option! Returning to main menu...", Colors.FAIL)
         input("[•] Press Enter to return to the main menu...")
+
+# Add placeholders for User-Agent Generator, Send HTTP Request, Look IP Info, etc.
+def user_agent_generator():
+    print_colored("[•] User-Agent Generator (Not implemented yet)", Colors.OKCYAN)
+    input("[•] Press Enter to return to the main menu...")
+
+def send_http_request():
+    print_colored("[•] Send HTTP Request (Not implemented yet)", Colors.OKCYAN)
+    input("[•] Press Enter to return to the main menu...")
+
+def look_ip_info():
+    print_colored("[•] Look IP Info (Not implemented yet)", Colors.OKCYAN)
+    input("[•] Press Enter to return to the main menu...")
+
+def facebook_ids_extractor():
+    print_colored("[•] Facebook IDs Extractor (Not implemented yet)", Colors.OKCYAN)
+    input("[•] Press Enter to return to the main menu...")
+
+def group_member_id_dumper():
+    print_colored("[•] Group Member ID Dumper (Not implemented yet)", Colors.OKCYAN)
+    input("[•] Press Enter to return to the main menu...")
 
 # Run the main menu
 if __name__ == "__main__":
