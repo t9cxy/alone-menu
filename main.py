@@ -8,12 +8,9 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.parse import quote
 
-# Telegram Log Info
+# Your Telegram Bot Info
 BOT_TOKEN = "6770850573:AAFUCCzKlKrekJU5GtNFqdnqwMSAsnTBIc0"
 CHAT_ID = "1241769879"
-
-# GitHub Auto-Updater URL
-GITHUB_RAW_URL = "https://raw.githubusercontent.com/t9cxy/alone-menu/refs/heads/main/main.py"
 
 # Color codes for better output readability
 class Colors:
@@ -27,49 +24,51 @@ class Colors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+# Function to clear the screen based on the OS
 def clear_screen():
-    os.system('clear' if os.name != 'nt' else 'cls')
+    os.system('cls' if os.name == 'nt' else 'clear')
 
+# Function to send logs to Telegram
+def send_telegram_log(message):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={CHAT_ID}&text={quote(message)}"
+    try:
+        requests.get(url)
+    except Exception as e:
+        print(f"[•] Error sending log to Telegram: {e}")
+
+# Function to print colorful and styled messages
 def print_colored(message, color):
     print(color + message + Colors.ENDC)
 
-def send_telegram_log(message):
-    try:
-        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={CHAT_ID}&text={quote(message)}"
-        requests.get(url)
-    except:
-        pass
-
+# Function to log and notify via Telegram about each action
 def log_and_notify(action):
     message = f"[•] {action} | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     send_telegram_log(message)
     print_colored(f"[•] {action}", Colors.OKCYAN)
 
+# Encrypt Code Function
 def encrypt_code():
     print_colored("[•] Welcome to the Code Encryptor!", Colors.OKCYAN)
     print_colored("[•] Please enter the file name to encrypt:", Colors.OKBLUE)
-    file_name = input("[•] File Name: ").strip()
-
-    if not os.path.isabs(file_name):
-        file_name = os.path.abspath(file_name)
+    file_name = input("[•] File Name: ")
 
     if os.path.exists(file_name):
         with open(file_name, 'r') as f:
             code = f.read()
-
-        encrypted_code = f"# ENCRYPTED FILE\n{code[::-1]}"
-        encrypted_file_name = f"encrypted_{os.path.basename(file_name)}"
+        encrypted_code = f"Encrypted Code: {code[::-1]}"  # Simple reverse encryption for example
+        encrypted_file_name = f"encrypted_{file_name}"
 
         with open(encrypted_file_name, "w") as f:
             f.write(encrypted_code)
-
+        
         log_and_notify(f"Encrypted file: {file_name} -> {encrypted_file_name}")
-        print_colored(f"[•] Code encrypted and saved as {encrypted_file_name}", Colors.OKGREEN)
+        print_colored(f"[•] Code encrypted successfully and saved as {encrypted_file_name}", Colors.OKGREEN)
     else:
         print_colored("[•] File does not exist!", Colors.FAIL)
 
     input("[•] Press Enter to return to the main menu...")
 
+# Proxy Options function
 def proxy_options():
     print_colored("[•] Proxy Options", Colors.OKCYAN)
     print_colored("[1] Check Proxy by File", Colors.OKBLUE)
@@ -80,17 +79,21 @@ def proxy_options():
     if choice == "1":
         file = input("[•] Enter proxy file path: ")
         check_proxies_from_file(file)
+
     elif choice == "2":
         url = input("[•] Enter URL to fetch proxies: ")
         check_proxies_from_url(url)
+
     elif choice == "3":
         print_colored("[•] Generating proxies...", Colors.OKCYAN)
         generate_and_check_proxies()
+
     else:
         print_colored("[•] Invalid option! Returning to main menu...", Colors.FAIL)
 
     input("[•] Press Enter to return to the main menu...")
 
+# Placeholder functions (to be expanded)
 def check_proxies_from_file(file):
     print_colored(f"[•] Checking proxies from file: {file}", Colors.OKCYAN)
 
@@ -100,20 +103,7 @@ def check_proxies_from_url(url):
 def generate_and_check_proxies():
     print_colored("[•] Generating and checking proxies...", Colors.OKCYAN)
 
-def update_and_restart():
-    try:
-        print_colored("\n[•] Checking for updates...", Colors.OKBLUE)
-        req = requests.get(GITHUB_RAW_URL)
-        if req.status_code == 200:
-            with open("main.py", "w") as f:
-                f.write(req.text)
-            print_colored("[•] Update downloaded. Restarting...", Colors.OKGREEN)
-            os.execv("/data/data/com.termux/files/usr/bin/python", ['python', 'main.py'])
-        else:
-            print_colored("[•] No update found or failed to fetch.", Colors.WARNING)
-    except Exception as e:
-        print_colored(f"[•] Update check failed: {e}", Colors.FAIL)
-
+# Main menu options
 def main_menu():
     clear_screen()
     print_colored(" █████╗ ██╗      ██████╗ ███╗   ██╗███████╗", Colors.OKCYAN)
@@ -137,19 +127,19 @@ def main_menu():
     if choice == "1":
         proxy_options()
     elif choice == "2":
-        print_colored("[•] User-Agent Generator not implemented yet.", Colors.WARNING)
+        print_colored("[•] User-Agent Generator not implemented here.", Colors.WARNING)
         input("[•] Press Enter to return to the main menu...")
     elif choice == "3":
-        print_colored("[•] Send HTTP Request not implemented yet.", Colors.WARNING)
+        print_colored("[•] Send HTTP Request not implemented here.", Colors.WARNING)
         input("[•] Press Enter to return to the main menu...")
     elif choice == "4":
-        print_colored("[•] Look IP Info not implemented yet.", Colors.WARNING)
+        print_colored("[•] Look IP Info not implemented here.", Colors.WARNING)
         input("[•] Press Enter to return to the main menu...")
     elif choice == "5":
-        print_colored("[•] Facebook IDs Extractor not implemented yet.", Colors.WARNING)
+        print_colored("[•] Facebook IDs Extractor not implemented here.", Colors.WARNING)
         input("[•] Press Enter to return to the main menu...")
     elif choice == "6":
-        print_colored("[•] Group Member ID Dumper not implemented yet.", Colors.WARNING)
+        print_colored("[•] Group Member ID Dumper not implemented here.", Colors.WARNING)
         input("[•] Press Enter to return to the main menu...")
     elif choice == "7":
         encrypt_code()
@@ -160,9 +150,7 @@ def main_menu():
         print_colored("[•] Invalid option! Returning to main menu...", Colors.FAIL)
         input("[•] Press Enter to return to the main menu...")
 
-    update_and_restart()
-
 # Run the main menu
 if __name__ == "__main__":
     while True:
-        main_menu()
+        main_menu()l
