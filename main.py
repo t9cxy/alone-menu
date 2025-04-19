@@ -1,9 +1,11 @@
+# ALONE TOOL - MAIN SCRIPT
+
 import os
 import re
 import time
 import json
-import requests
 import random
+import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.parse import quote
@@ -19,7 +21,7 @@ W = '\033[1;97m'
 RESET = '\033[0m'
 
 def clear():
-    os.system('clear' if os.name == 'posix' else 'cls')
+    os.system("clear" if os.name == "posix" else "cls")
 
 def banner():
     print(f"""{G}
@@ -29,11 +31,10 @@ def banner():
 ██╔══██║██║     ██║   ██║██║╚██╗██║██╔══╝  
 ██║  ██║███████╗╚██████╔╝██║ ╚████║███████╗
 ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
-            {W}Created by @i4mAlone
+{W}           CREATED BY @i4mAlone
 """)
 
 def menu():
-    clear()
     banner()
     print(f"""{C}
 [1] {Y}Proxy Options
@@ -46,106 +47,99 @@ def menu():
 [0] {R}Exit{RESET}
 """)
 
+def wait():
+    input(f"\n{C}[•] Press Enter to return...")
+
 def proxy_options():
     clear()
-    print(f"""{C}
-[1] Check Proxy By File
-[2] Check From URL (Github, Pastebin, etc)
-[3] Generate and Check Proxy
-""")
+    print(f"{C}\n[1] Load Proxies from File\n[2] Load Proxies from URL\n[3] Generate Random Proxies\n")
     choice = input(f"{Y}[?] Choose: {RESET}")
+    
     if choice == "1":
-        path = input(f"{Y}[•] Enter path to proxy file: {RESET}")
-        check_proxy_file(path)
+        path = input(f"{Y}[•] File path: {RESET}")
+        try:
+            with open(path) as f:
+                proxies = f.read().splitlines()
+                print(f"{G}[✓] Loaded {len(proxies)} proxies")
+        except:
+            print(f"{R}[!] File not found.")
+    
     elif choice == "2":
-        url = input(f"{Y}[•] Enter URL to proxy list: {RESET}")
-        check_proxy_url(url)
+        url = input(f"{Y}[•] Proxy list URL: {RESET}")
+        try:
+            res = requests.get(url)
+            proxies = res.text.strip().splitlines()
+            print(f"{G}[✓] Loaded {len(proxies)} proxies from URL")
+        except:
+            print(f"{R}[!] Failed to load proxies.")
+    
     elif choice == "3":
-        count = int(input(f"{Y}[•] Number of proxies to generate: {RESET}"))
-        generate_proxies(count)
+        target = int(input(f"{Y}[•] How many proxies? {RESET}"))
+        ok, bad = 0, 0
+        with open("proxy.txt", "w") as f:
+            while ok < target:
+                ip = ".".join([str(random.randint(1, 255)) for _ in range(4)])
+                port = random.randint(1000, 9999)
+                proxy = f"{ip}:{port}"
+                if random.choice([True, False]):
+                    ok += 1
+                    f.write(proxy + "\n")
+                else:
+                    bad += 1
+                clear()
+                print(f"{proxy}\n{G}[ OK ] {ok}/{target} | {R}[ BAD ] {bad}")
+    
     else:
-        print(f"{R}[!] Invalid choice")
-        input(f"{W}[•] Press Enter to return...")
-
-def check_proxy_file(path):
-    try:
-        with open(path, 'r') as file:
-            proxies = file.read().splitlines()
-            print(f"{G}[✓] Loaded {len(proxies)} proxies from file")
-    except FileNotFoundError:
-        print(f"{R}[!] File not found")
-    input(f"{W}[•] Press Enter to return...")
-
-def check_proxy_url(url):
-    try:
-        res = requests.get(url)
-        proxies = res.text.strip().splitlines()
-        print(f"{G}[✓] Loaded {len(proxies)} proxies from URL")
-    except Exception as e:
-        print(f"{R}[!] Failed to fetch: {e}")
-    input(f"{W}[•] Press Enter to return...")
-
-def generate_proxies(count):
-    print(f"{Y}[•] Generating and checking {count} proxies...")
-    ok, bad = 0, 0
-    with open("proxy.txt", "w") as f:
-        while ok < count:
-            ip = ".".join(str(random.randint(1, 255)) for _ in range(4))
-            port = random.randint(1000, 9999)
-            proxy = f"{ip}:{port}"
-            # Simulated check
-            if random.choice([True, False]):
-                ok += 1
-                f.write(f"{proxy}\n")
-            else:
-                bad += 1
-            clear()
-            print(f"{proxy}\n{G}[ GOOD ] {ok}/{count} | {R}[ BAD ] {bad}{RESET}")
-    input(f"{W}[•] Press Enter to return...")
+        print(f"{R}[!] Invalid choice.")
+    
+    wait()
 
 def user_agent_generator():
-    print(f"{R}[•] User-Agent Generator not implemented here.")
-    input(f"{W}[•] Press Enter to return...")
+    print(f"{R}[•] Not implemented yet.")
+    wait()
 
 def send_http_request():
-    url = input(f"{Y}[•] Enter URL: {RESET}")
+    url = input(f"{Y}[•] Target URL: {RESET}")
     try:
-        response = requests.get(url)
-        print(f"{G}[✓] Status Code: {response.status_code}")
-        print(response.text[:500])
+        res = requests.get(url)
+        print(f"{G}[✓] Response Code: {res.status_code}")
+        print(res.text[:300])
     except Exception as e:
         print(f"{R}[!] Error: {e}")
-    input(f"{W}[•] Press Enter to return...")
+    wait()
 
 def look_ip_info():
-    ip = input(f"{Y}[•] Enter IP to check: {RESET}")
+    ip = input(f"{Y}[•] Enter IP: {RESET}")
     try:
         res = requests.get(f"http://ip-api.com/json/{ip}")
         data = res.json()
-        for key in ['query','city','regionName','country','isp']:
-            print(f"{C}{key.title()}: {W}{data.get(key, 'N/A')}")
-    except Exception as e:
-        print(f"{R}[!] Error: {e}")
-    input(f"{W}[•] Press Enter to return...")
+        for k in ['query','city','regionName','country','isp']:
+            print(f"{C}{k.title()}: {W}{data.get(k)}")
+    except:
+        print(f"{R}[!] Failed to fetch IP info.")
+    wait()
 
 def facebook_ids_extractor():
-    print(f"{Y}[•] Feature coming soon...")
-    input(f"{W}[•] Press Enter to return...")
+    print(f"{R}[•] Facebook ID extractor coming soon.")
+    wait()
 
 def group_id_dumper():
-    print(f"{Y}[•] Feature coming soon...")
-    input(f"{W}[•] Press Enter to return...")
+    print(f"{R}[•] Group member dumper coming soon.")
+    wait()
 
 def send_feedback():
-    feedback = input(f"{Y}[•] Your feedback: {RESET}")
+    fb = input(f"{Y}[•] Your feedback: {RESET}")
     with open("feedback.txt", "a") as f:
-        f.write(f"{datetime.now()}: {feedback}\n")
-    print(f"{G}[✓] Feedback saved.")
-    input(f"{W}[•] Press Enter to return...")
+        f.write(f"{datetime.now()} | {fb}\n")
+    print(f"{G}[✓] Thanks for the feedback!")
+    wait()
 
+# Main loop
 while True:
+    clear()
     menu()
     choice = input(f"{Y}[?] Choose an option: {RESET}")
+    
     if choice == "1":
         proxy_options()
     elif choice == "2":
@@ -161,8 +155,8 @@ while True:
     elif choice == "7":
         send_feedback()
     elif choice == "0":
-        print(f"{G}[✓] Exiting...")
+        print(f"{G}[✓] Exiting...{RESET}")
         break
     else:
-        print(f"{R}[!] Invalid option")
-        input(f"{W}[•] Press Enter to try again...")
+        print(f"{R}[!] Invalid option.")
+        wait()
